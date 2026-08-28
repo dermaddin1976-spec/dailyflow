@@ -1,0 +1,58 @@
+import { NextResponse } from 'next/server';
+import db from '../../../../../lib/db.js';
+import { getCurrentUser } from '../../../../../lib/auth.js';
+import { refreshTokenIfNeeded, fetchActivities } from '../../../../../lib/strava.js';
+
+function typeToLabel(activity) {
+  return activity.sport_type || activity.type || 'Workout';
+}
+
+export async function POST() {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
+
+  const row = db.prepare(
+    'SELECT strava_access_token, strava_refresh_token, strava_token_expires_at FROM users WHERE id=?'
+  ).get(user.id);
+  if (!row || !row.strava_access_token) {
+    return NextResponse.json({ error: 'Strava is not connected.' }, { status: 400 });
+  }
+
+  try {
+    const { accessToken, refreshToken, expiresAt } = await refreshTokenIfNeeded(row);
+    if (accessToken !== row.strava_access_token) {
+      db.prepare(
+        'UPDATE users SET strava_access_token=?, strava_refresh_token=?, strava_token_expires_at=? WHERE id=?'
+      ).run(accessToken, refreshToken, expiresAt, user.id);
+    }
+
+    const activities = await fetchActivities(accessToken);
+    const existing = db.prepare(
+      'SELECT strava_activity_id FROM workout_logs WHERE user_id=? AND strava_activity_id IS NOT NULL'
+    ).all(user.id);
+    const seen = new Set(existing.map(r => r.strava_activity_id));
+
+    const insert = db.prepare(
+      'INSERT INTO workout_logs (user_id, date, type, minutes, intensity, note, strava_activity_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    );
+
+    let added = 0;
+    for (const a of activities) {
+      const activityId = String(a.id);
+      if (seen.has(activityId)) continue;
+      const date = (a.start_date_local || a.start_date || '').slice(0, 10);
+      if (!date) continue;
+      const minutes = Math.round((a.moving_time || 0) / 60);
+      if (minutes <= 0) continue;
+      const distanceKm = a.distance ? (a.distance / 1000).toFixed(1) : null;
+      const note = distanceKm ? `Synced from Strava · ${distanceKm} km` : 'Synced from Strava';
+      insert.run(user.id, date, typeToLabel(a), minutes, null, note, activityId);
+      seen.add(activityId);
+      added++;
+    }
+
+    return NextResponse.json({ ok: true, added, total: activities.length });
+  } catch (err) {
+    return NextResponse.json({ error: err.message || 'Sync failed.' }, { status: 502 });
+  }
+}
