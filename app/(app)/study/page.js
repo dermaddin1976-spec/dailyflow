@@ -10,12 +10,12 @@ export default async function StudyPage() {
   const dates = lastNDates(7);
   const weekStart = dates[0], weekEnd = dates[dates.length - 1];
 
-  const dailyRows = db.prepare(
+  const dailyRows = await db.prepare(
     'SELECT date, SUM(minutes) as minutes FROM study_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
   ).all(user.id, weekStart, weekEnd);
   const dailyMap = Object.fromEntries(dailyRows.map(r => [r.date, r.minutes || 0]));
 
-  const totals = db.prepare(
+  const totals = await db.prepare(
     'SELECT COALESCE(SUM(minutes),0) as minutes, COUNT(*) as sessions, AVG(focus) as avgFocus FROM study_logs WHERE user_id=? AND date BETWEEN ? AND ?'
   ).get(user.id, weekStart, weekEnd);
 

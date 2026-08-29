@@ -35,7 +35,7 @@ function describeEntry(row) {
 export default async function LogPage() {
   const user = await getCurrentUser();
 
-  const rows = db.prepare(`
+  const rows = await db.prepare(`
     SELECT 'sleep' as kind, id, date, created_at, NULL as a, hours as b, quality as c, note as d FROM sleep_logs WHERE user_id=?
     UNION ALL
     SELECT 'study' as kind, id, date, created_at, subject as a, minutes as b, focus as c, note as d FROM study_logs WHERE user_id=?

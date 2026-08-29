@@ -10,7 +10,7 @@ export async function POST(request) {
   const { title } = await request.json();
   if (!title) return NextResponse.json({ error: 'Missing deck title.' }, { status: 400 });
 
-  const cards = db.prepare('SELECT question, answer FROM flashcards WHERE user_id=? AND source_title=?').all(user.id, title);
+  const cards = await db.prepare('SELECT question, answer FROM flashcards WHERE user_id=? AND source_title=?').all(user.id, title);
   if (!cards.length) return NextResponse.json({ error: 'That deck has no cards.' }, { status: 400 });
 
   const material = cards.map((c, i) => `${i + 1}. Q: ${c.question}\nA: ${c.answer}`).join('\n');
@@ -31,11 +31,11 @@ export async function POST(request) {
     });
 
     const questions = Array.isArray(result.questions) ? result.questions : [];
-    db.prepare('DELETE FROM quiz_questions WHERE user_id=? AND source_title=?').run(user.id, title);
+    await db.prepare('DELETE FROM quiz_questions WHERE user_id=? AND source_title=?').run(user.id, title);
     const insert = db.prepare('INSERT INTO quiz_questions (user_id, source_title, question, options, correct_index) VALUES (?, ?, ?, ?, ?)');
     for (const q of questions) {
       if (q && q.question && Array.isArray(q.options) && q.options.length === 4 && Number.isInteger(q.correctIndex)) {
-        insert.run(user.id, title, q.question, JSON.stringify(q.options), q.correctIndex);
+        await insert.run(user.id, title, q.question, JSON.stringify(q.options), q.correctIndex);
       }
     }
     return NextResponse.json({ ok: true, count: questions.length });

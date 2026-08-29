@@ -13,7 +13,7 @@ export async function POST(request, { params }) {
   const trimmed = typeof instructions === 'string' ? instructions.trim() : '';
   if (!trimmed) return NextResponse.json({ error: 'Describe what you want changed first.' }, { status: 400 });
 
-  const row = db.prepare('SELECT * FROM meal_plans WHERE id=? AND user_id=?').get(id, user.id);
+  const row = await db.prepare('SELECT * FROM meal_plans WHERE id=? AND user_id=?').get(id, user.id);
   if (!row) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   if (!row.answers) return NextResponse.json({ error: 'This plan has no stored answers to revise from.' }, { status: 400 });
 

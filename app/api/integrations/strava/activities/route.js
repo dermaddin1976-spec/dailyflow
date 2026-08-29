@@ -11,7 +11,7 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
 
-  const row = db.prepare(
+  const row = await db.prepare(
     'SELECT strava_access_token, strava_refresh_token, strava_token_expires_at FROM users WHERE id=?'
   ).get(user.id);
   if (!row || !row.strava_access_token) {
@@ -21,13 +21,13 @@ export async function GET() {
   try {
     const { accessToken, refreshToken, expiresAt } = await refreshTokenIfNeeded(row);
     if (accessToken !== row.strava_access_token) {
-      db.prepare(
+      await db.prepare(
         'UPDATE users SET strava_access_token=?, strava_refresh_token=?, strava_token_expires_at=? WHERE id=?'
       ).run(accessToken, refreshToken, expiresAt, user.id);
     }
 
     const activities = await fetchAllActivities(accessToken);
-    const existing = db.prepare(
+    const existing = await db.prepare(
       'SELECT strava_activity_id FROM workout_logs WHERE user_id=? AND strava_activity_id IS NOT NULL'
     ).all(user.id);
     const seen = new Set(existing.map(r => r.strava_activity_id));

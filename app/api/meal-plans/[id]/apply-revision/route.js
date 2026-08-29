@@ -7,13 +7,13 @@ export async function POST(request, { params }) {
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id } = await params;
 
-  const row = db.prepare('SELECT answers FROM meal_plans WHERE id=? AND user_id=?').get(id, user.id);
+  const row = await db.prepare('SELECT answers FROM meal_plans WHERE id=? AND user_id=?').get(id, user.id);
   if (!row) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
 
   const { days, shoppingList, estimatedTotalCost, notes, answers } = await request.json();
   const answersJson = answers ? JSON.stringify(answers) : row.answers;
 
-  db.prepare(`
+  await db.prepare(`
     UPDATE meal_plans SET plan_json=?, shopping_list_json=?, total_est_cost=?, notes=?, answers=? WHERE id=? AND user_id=?
   `).run(
     JSON.stringify(Array.isArray(days) ? days : []),

@@ -18,7 +18,7 @@ export async function GET(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id } = await params;
-  const row = db.prepare('SELECT * FROM meal_plans WHERE id=? AND user_id=?').get(id, user.id);
+  const row = await db.prepare('SELECT * FROM meal_plans WHERE id=? AND user_id=?').get(id, user.id);
   if (!row) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   return NextResponse.json({ plan: serialize(row) });
 }
@@ -27,7 +27,7 @@ export async function PATCH(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id } = await params;
-  const row = db.prepare('SELECT * FROM meal_plans WHERE id=? AND user_id=?').get(id, user.id);
+  const row = await db.prepare('SELECT * FROM meal_plans WHERE id=? AND user_id=?').get(id, user.id);
   if (!row) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   if (!row.answers) return NextResponse.json({ error: 'This plan has no stored answers to regenerate from.' }, { status: 400 });
 
@@ -37,7 +37,7 @@ export async function PATCH(request, { params }) {
   try {
     const answers = JSON.parse(row.answers);
     const result = await generateMealPlan(answers, targets);
-    db.prepare(`
+    await db.prepare(`
       UPDATE meal_plans SET plan_json=?, shopping_list_json=?, total_est_cost=?, notes=? WHERE id=? AND user_id=?
     `).run(JSON.stringify(result.days), JSON.stringify(result.shoppingList), result.estimatedTotalCost, result.notes, id, user.id);
     return NextResponse.json({ ok: true });
@@ -50,6 +50,6 @@ export async function DELETE(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id } = await params;
-  db.prepare('DELETE FROM meal_plans WHERE id=? AND user_id=?').run(id, user.id);
+  await db.prepare('DELETE FROM meal_plans WHERE id=? AND user_id=?').run(id, user.id);
   return NextResponse.json({ ok: true });
 }

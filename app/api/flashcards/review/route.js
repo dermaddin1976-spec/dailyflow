@@ -14,7 +14,7 @@ export async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id, correct } = await request.json();
-  const card = db.prepare('SELECT * FROM flashcards WHERE id=? AND user_id=?').get(id, user.id);
+  const card = await db.prepare('SELECT * FROM flashcards WHERE id=? AND user_id=?').get(id, user.id);
   if (!card) return NextResponse.json({ error: 'Card not found.' }, { status: 404 });
 
   const today = new Date().toISOString().slice(0, 10);
@@ -22,6 +22,6 @@ export async function POST(request) {
   box = correct ? Math.min(box + 1, 5) : 1;
   const dueDate = addDays(today, INTERVAL_DAYS[box]);
 
-  db.prepare('UPDATE flashcards SET box=?, due_date=?, last_reviewed=? WHERE id=?').run(box, dueDate, today, id);
+  await db.prepare('UPDATE flashcards SET box=?, due_date=?, last_reviewed=? WHERE id=?').run(box, dueDate, today, id);
   return NextResponse.json({ ok: true, box, due_date: dueDate });
 }

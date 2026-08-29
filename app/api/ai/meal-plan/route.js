@@ -27,7 +27,7 @@ export async function POST(request) {
       INSERT INTO meal_plans (user_id, title, answers, budget, currency, plan_json, shopping_list_json, total_est_cost, notes)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    const inserted = insert.run(
+    const inserted = await insert.run(
       user.id, title, JSON.stringify(answers), budget, answers.currency || 'EUR',
       JSON.stringify(result.days), JSON.stringify(result.shoppingList), result.estimatedTotalCost, result.notes
     );

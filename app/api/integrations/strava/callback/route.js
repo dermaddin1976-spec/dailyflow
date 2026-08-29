@@ -16,7 +16,7 @@ export async function GET(request) {
   try {
     const redirectUri = new URL('/api/integrations/strava/callback', request.url).toString();
     const data = await exchangeCode(code, redirectUri);
-    db.prepare(
+    await db.prepare(
       'UPDATE users SET strava_athlete_id=?, strava_access_token=?, strava_refresh_token=?, strava_token_expires_at=? WHERE id=?'
     ).run(String((data.athlete && data.athlete.id) || ''), data.access_token, data.refresh_token, data.expires_at, userId);
     return NextResponse.redirect(new URL('/settings?strava=connected', request.url));

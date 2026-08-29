@@ -9,10 +9,10 @@ export async function POST(request) {
   if (!newPassword || newPassword.length < 8) {
     return NextResponse.json({ error: 'New password must be at least 8 characters.' }, { status: 400 });
   }
-  const row = db.prepare('SELECT password_hash FROM users WHERE id=?').get(user.id);
+  const row = await db.prepare('SELECT password_hash FROM users WHERE id=?').get(user.id);
   if (!row || !verifyPassword(currentPassword || '', row.password_hash)) {
     return NextResponse.json({ error: 'Current password is incorrect.' }, { status: 401 });
   }
-  db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hashPassword(newPassword), user.id);
+  await db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hashPassword(newPassword), user.id);
   return NextResponse.json({ ok: true });
 }

@@ -11,18 +11,18 @@ export default async function SleepPage() {
   const dates = lastNDates(7);
   const weekStart = dates[0], weekEnd = dates[dates.length - 1];
 
-  const dailyRows = db.prepare(
+  const dailyRows = await db.prepare(
     'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
   ).all(user.id, weekStart, weekEnd);
   const dailyMap = Object.fromEntries(dailyRows.map(r => [r.date, Math.round((r.hours || 0) * 10) / 10]));
 
-  const totals = db.prepare(
+  const totals = await db.prepare(
     'SELECT COUNT(*) as nights, AVG(hours) as avgHours, AVG(quality) as avgQuality FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ?'
   ).get(user.id, weekStart, weekEnd);
 
   const DEBT_WINDOW_DAYS = 14;
   const debtDates = lastNDates(DEBT_WINDOW_DAYS);
-  const debtRows = db.prepare(
+  const debtRows = await db.prepare(
     'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
   ).all(user.id, debtDates[0], debtDates[debtDates.length - 1]);
   const target = recommendedSleepHours(user.age);

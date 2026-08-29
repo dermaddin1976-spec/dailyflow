@@ -41,7 +41,7 @@ export async function POST(request) {
     const cards = Array.isArray(result.cards) ? result.cards : [];
     const insert = db.prepare('INSERT INTO flashcards (user_id, source_title, question, answer) VALUES (?, ?, ?, ?)');
     for (const c of cards) {
-      if (c && c.question && c.answer) insert.run(user.id, sourceTitle, c.question, c.answer);
+      if (c && c.question && c.answer) await insert.run(user.id, sourceTitle, c.question, c.answer);
     }
     return NextResponse.json({ ok: true, count: cards.length, title: sourceTitle });
   } catch (err) {

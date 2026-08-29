@@ -34,7 +34,7 @@ function MacroBar({ label, consumed, target, unit }) {
 export default async function NutritionPage() {
   const user = await getCurrentUser();
   const date = todayStr();
-  const totals = db.prepare(
+  const totals = await db.prepare(
     'SELECT COALESCE(SUM(calories),0) as calories, COALESCE(SUM(protein),0) as protein, COALESCE(SUM(carbs),0) as carbs, COALESCE(SUM(fat),0) as fat FROM meal_logs WHERE user_id=? AND date=?'
   ).get(user.id, date);
   const targets = computeTargets(user);

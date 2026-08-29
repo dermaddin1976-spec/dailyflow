@@ -67,7 +67,7 @@ export async function POST(request) {
     const testFocus = Array.isArray(result.testFocus) ? result.testFocus.filter(Boolean) : [];
 
     const insert = db.prepare('INSERT INTO study_notes (user_id, source_title, summary, key_points, test_focus) VALUES (?, ?, ?, ?, ?)');
-    const inserted = insert.run(user.id, sourceTitle, summary, keyPoints.join('\n'), testFocus.join('\n'));
+    const inserted = await insert.run(user.id, sourceTitle, summary, keyPoints.join('\n'), testFocus.join('\n'));
 
     return NextResponse.json({ ok: true, id: Number(inserted.lastInsertRowid), title: sourceTitle });
   } catch (err) {

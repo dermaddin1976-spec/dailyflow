@@ -11,15 +11,15 @@ function todayStr(){ return new Date().toISOString().slice(0,10); }
 function dateStr(offset){ const d = new Date(); d.setDate(d.getDate() + offset); return d.toISOString().slice(0,10); }
 function daysBetween(a, b) { return Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / 86400000); }
 
-function computeReadiness(userId, userAge) {
-  const lastSleep = db.prepare('SELECT * FROM sleep_logs WHERE user_id=? ORDER BY date DESC LIMIT 1').get(userId);
+async function computeReadiness(userId, userAge) {
+  const lastSleep = await db.prepare('SELECT * FROM sleep_logs WHERE user_id=? ORDER BY date DESC LIMIT 1').get(userId);
   const weekStart = dateStr(-6), weekEnd = dateStr(0);
-  const training = db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM workout_logs WHERE user_id=? AND date BETWEEN ? AND ?').get(userId, weekStart, weekEnd);
-  const studyWeek = db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM study_logs WHERE user_id=? AND date BETWEEN ? AND ?').get(userId, weekStart, weekEnd);
+  const training = await db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM workout_logs WHERE user_id=? AND date BETWEEN ? AND ?').get(userId, weekStart, weekEnd);
+  const studyWeek = await db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM study_logs WHERE user_id=? AND date BETWEEN ? AND ?').get(userId, weekStart, weekEnd);
   const yesterday = dateStr(-1);
-  const yesterdayMeals = db.prepare('SELECT COALESCE(SUM(calories),0) as total, COUNT(*) as count FROM meal_logs WHERE user_id=? AND date=?').get(userId, yesterday);
+  const yesterdayMeals = await db.prepare('SELECT COALESCE(SUM(calories),0) as total, COUNT(*) as count FROM meal_logs WHERE user_id=? AND date=?').get(userId, yesterday);
   const priorStart = dateStr(-7), priorEnd = dateStr(-2);
-  const priorDays = db.prepare('SELECT date, SUM(calories) as total FROM meal_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date').all(userId, priorStart, priorEnd);
+  const priorDays = await db.prepare('SELECT date, SUM(calories) as total FROM meal_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date').all(userId, priorStart, priorEnd);
 
   const components = [];
 
@@ -80,23 +80,23 @@ function scoreColor(score) {
 export default async function TodayPage() {
   const user = await getCurrentUser();
   const date = todayStr();
-  const sleep = db.prepare('SELECT * FROM sleep_logs WHERE user_id=? AND date=? ORDER BY id DESC LIMIT 1').get(user.id, date);
-  const study = db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM study_logs WHERE user_id=? AND date=?').get(user.id, date);
-  const workout = db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM workout_logs WHERE user_id=? AND date=?').get(user.id, date);
-  const meals = db.prepare('SELECT COUNT(*) as count, COALESCE(SUM(calories),0) as calories FROM meal_logs WHERE user_id=? AND date=?').get(user.id, date);
-  const readiness = computeReadiness(user.id, user.age);
+  const sleep = await db.prepare('SELECT * FROM sleep_logs WHERE user_id=? AND date=? ORDER BY id DESC LIMIT 1').get(user.id, date);
+  const study = await db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM study_logs WHERE user_id=? AND date=?').get(user.id, date);
+  const workout = await db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM workout_logs WHERE user_id=? AND date=?').get(user.id, date);
+  const meals = await db.prepare('SELECT COUNT(*) as count, COALESCE(SUM(calories),0) as calories FROM meal_logs WHERE user_id=? AND date=?').get(user.id, date);
+  const readiness = await computeReadiness(user.id, user.age);
 
-  const allWorkoutDates = db.prepare('SELECT DISTINCT date FROM workout_logs WHERE user_id=?').all(user.id).map(r => r.date);
+  const allWorkoutDates = (await db.prepare('SELECT DISTINCT date FROM workout_logs WHERE user_id=?').all(user.id)).map(r => r.date);
   const streak = computeStreak(allWorkoutDates);
 
   const DEBT_WINDOW_DAYS = 14;
   const debtDates = lastNDates(DEBT_WINDOW_DAYS);
-  const debtRows = db.prepare(
+  const debtRows = await db.prepare(
     'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
   ).all(user.id, debtDates[0], debtDates[debtDates.length - 1]);
   const sleepDebt = computeSleepDebt(debtRows.map(r => r.hours), recommendedSleepHours(user.age), DEBT_WINDOW_DAYS);
 
-  const latestPlan = db.prepare('SELECT * FROM meal_plans WHERE user_id=? ORDER BY id DESC LIMIT 1').get(user.id);
+  const latestPlan = await db.prepare('SELECT * FROM meal_plans WHERE user_id=? ORDER BY id DESC LIMIT 1').get(user.id);
   let todaysMeals = null;
   if (latestPlan) {
     const planStart = latestPlan.created_at.slice(0, 10);
