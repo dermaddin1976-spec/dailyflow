@@ -483,3 +483,101 @@ export function AppleHealthCard({ connected }) {
     </div>
   );
 }
+
+export function AdminPasswordResetsCard() {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [genMsg, setGenMsg] = useState('');
+  const [copiedToken, setCopiedToken] = useState('');
+  const [origin, setOrigin] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') setOrigin(window.location.origin);
+  }, []);
+
+  async function refresh() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/password-resets');
+      if (res.ok) {
+        const data = await res.json();
+        setRequests(data.requests || []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => { refresh(); }, []);
+
+  function linkFor(token) {
+    return `${origin}/reset-password?token=${token}`;
+  }
+
+  function copy(token) {
+    navigator.clipboard.writeText(linkFor(token)).then(() => {
+      setCopiedToken(token);
+      setTimeout(() => setCopiedToken(''), 1500);
+    }).catch(() => {});
+  }
+
+  async function generate(e) {
+    e.preventDefault();
+    setGenMsg(''); setGenerating(true);
+    try {
+      const res = await fetch('/api/admin/password-resets', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setGenMsg(data.error || 'Something went wrong.'); return; }
+      setEmail('');
+      setGenMsg('Generated — find it in the list below.');
+      refresh();
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <div className="card" style={{ marginTop: 20 }}>
+      <h3>Password reset requests</h3>
+      <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
+        There&rsquo;s no email sending set up, so this is how a friend gets back into their account: they hit
+        &ldquo;Forgot your password?&rdquo; on the login page (or you generate one below), then you copy the link
+        here and send it to them yourself. Links expire after an hour.
+      </p>
+
+      <form onSubmit={generate} style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+        <input
+          type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="friend@email.com" required
+          style={{
+            flex: 1, minWidth: 0, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+            background: 'var(--surface-2)', color: 'var(--text)', padding: '9px 11px', fontSize: 13,
+          }}
+        />
+        <button className="btn secondary" type="submit" disabled={generating}>{generating ? 'Generating…' : 'Generate link'}</button>
+      </form>
+      {genMsg && <p style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 8 }}>{genMsg}</p>}
+
+      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+        {loading ? (
+          <p style={{ fontSize: 12.5, color: 'var(--muted)' }}>Loading…</p>
+        ) : requests.length === 0 ? (
+          <p style={{ fontSize: 12.5, color: 'var(--muted)' }}>No pending requests.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {requests.map(r => (
+              <div key={r.token} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.email}</span>
+                <button type="button" className="btn secondary" style={{ fontSize: 12, padding: '6px 12px', flexShrink: 0 }} onClick={() => copy(r.token)}>
+                  {copiedToken === r.token ? 'Copied' : 'Copy link'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

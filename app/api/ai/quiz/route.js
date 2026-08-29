@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../lib/db.js';
 import { getCurrentUser } from '../../../../lib/auth.js';
+import { checkAiRateLimit, AI_DAILY_LIMIT } from '../../../../lib/rateLimit.js';
 import { callGemini } from '../../../../lib/gemini.js';
 
 export async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
+
+  const rl = await checkAiRateLimit(user.id);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `You've hit today's DailyAI limit (${AI_DAILY_LIMIT} requests/day). It resets on a rolling 24h window — try again a bit later.` },
+      { status: 429 },
+    );
+  }
 
   const { title } = await request.json();
   if (!title) return NextResponse.json({ error: 'Missing deck title.' }, { status: 400 });

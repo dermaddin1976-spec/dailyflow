@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '../../../../lib/auth.js';
+import { checkAiRateLimit, AI_DAILY_LIMIT } from '../../../../lib/rateLimit.js';
 import { callGemini } from '../../../../lib/gemini.js';
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
@@ -7,6 +8,14 @@ function todayStr() { return new Date().toISOString().slice(0, 10); }
 export async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
+
+  const rl = await checkAiRateLimit(user.id);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `You've hit today's DailyAI limit (${AI_DAILY_LIMIT} requests/day). It resets on a rolling 24h window — try again a bit later.` },
+      { status: 429 },
+    );
+  }
 
   const { pdfBase64, images } = await request.json();
 

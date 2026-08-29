@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '../../../../lib/auth.js';
+import { checkAiRateLimit, AI_DAILY_LIMIT } from '../../../../lib/rateLimit.js';
 import { callGemini } from '../../../../lib/gemini.js';
 
 const MAX_HISTORY_TURNS = 6;
@@ -9,6 +10,14 @@ const MAX_QUESTION_CHARS = 1000;
 export async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
+
+  const rl = await checkAiRateLimit(user.id);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `You've hit today's DailyAI limit (${AI_DAILY_LIMIT} requests/day). It resets on a rolling 24h window — try again a bit later.` },
+      { status: 429 },
+    );
+  }
 
   const { context, question, history } = await request.json();
 

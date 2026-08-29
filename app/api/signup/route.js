@@ -2,8 +2,14 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import db from '../../../lib/db.js';
 import { hashPassword, createSession } from '../../../lib/auth.js';
+import { checkRateLimit, clientIp } from '../../../lib/rateLimit.js';
 
 export async function POST(request) {
+  const rl = await checkRateLimit(`signup:ip:${clientIp(request)}`, 6, 60 * 60 * 1000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many signups from this connection — try again later.' }, { status: 429 });
+  }
+
   const { email, password, name } = await request.json();
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
