@@ -166,14 +166,73 @@ export function PasswordForm() {
   );
 }
 
-export function StravaCard({ connected, status }) {
+export function StravaConnectionCard({ connected, status }) {
+  const router = useRouter();
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  async function disconnect() {
+    if (!window.confirm('Disconnect Strava? Activities already synced stay in your log.')) return;
+    setDisconnecting(true);
+    await fetch('/api/integrations/strava/disconnect', { method: 'POST' });
+    setDisconnecting(false);
+    router.refresh();
+  }
+
+  return (
+    <div className="card" style={{ maxWidth: 420, marginTop: 20 }}>
+      <h3>Connected accounts</h3>
+
+      {status === 'not_configured' && (
+        <p className="error-text" style={{ marginTop: 8 }}>
+          Strava isn&rsquo;t set up yet — add STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET to .env.local first (see below).
+        </p>
+      )}
+      {status === 'error' && (
+        <p className="error-text" style={{ marginTop: 8 }}>Couldn&rsquo;t connect to Strava. Try again.</p>
+      )}
+      {status === 'connected' && (
+        <p style={{ color: 'var(--good)', fontSize: 13, marginTop: 8 }}>Connected.</p>
+      )}
+
+      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <div>
+            <p style={{ fontWeight: 600, fontSize: 14 }}>Strava</p>
+            <p style={{ color: 'var(--text-2)', fontSize: 12.5 }}>
+              {connected ? 'Connected — head to the Sport page to import workouts.' : 'Sync your runs, rides and workouts automatically.'}
+            </p>
+          </div>
+          {connected ? (
+            <span className="mono" style={{ fontSize: 11, color: 'var(--good)', flexShrink: 0 }}>Connected</span>
+          ) : null}
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          {connected ? (
+            <button className="btn secondary" onClick={disconnect} disabled={disconnecting}>
+              {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+            </button>
+          ) : (
+            <a className="btn" href="/api/integrations/strava/connect">Connect Strava</a>
+          )}
+        </div>
+      </div>
+
+      <p style={{ color: 'var(--muted)', fontSize: 11.5, marginTop: 16 }}>
+        Google Calendar and other integrations come later.
+      </p>
+    </div>
+  );
+}
+
+export function StravaImportCard({ connected }) {
   const router = useRouter();
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [activities, setActivities] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [importing, setImporting] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
-  const [disconnecting, setDisconnecting] = useState(false);
+
+  if (!connected) return null;
 
   async function openPicker() {
     setSyncMsg('');
@@ -224,102 +283,59 @@ export function StravaCard({ connected, status }) {
     }
   }
 
-  async function disconnect() {
-    if (!window.confirm('Disconnect Strava? Activities already synced stay in your log.')) return;
-    setDisconnecting(true);
-    await fetch('/api/integrations/strava/disconnect', { method: 'POST' });
-    setDisconnecting(false);
-    router.refresh();
-  }
-
   return (
-    <div className="card" style={{ maxWidth: 420, marginTop: 20 }}>
-      <h3>Connected accounts</h3>
-
-      {status === 'not_configured' && (
-        <p className="error-text" style={{ marginTop: 8 }}>
-          Strava isn&rsquo;t set up yet — add STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET to .env.local first (see below).
-        </p>
-      )}
-      {status === 'error' && (
-        <p className="error-text" style={{ marginTop: 8 }}>Couldn&rsquo;t connect to Strava. Try again.</p>
-      )}
-      {status === 'connected' && (
-        <p style={{ color: 'var(--good)', fontSize: 13, marginTop: 8 }}>Connected.</p>
-      )}
-
-      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-          <div>
-            <p style={{ fontWeight: 600, fontSize: 14 }}>Strava</p>
-            <p style={{ color: 'var(--text-2)', fontSize: 12.5 }}>
-              {connected ? 'Choose which runs, rides and workouts to bring into your training log.' : 'Sync your runs, rides and workouts automatically.'}
-            </p>
-          </div>
-          {connected ? (
-            <span className="mono" style={{ fontSize: 11, color: 'var(--good)', flexShrink: 0 }}>Connected</span>
-          ) : null}
+    <div className="card" style={{ marginTop: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+        <div>
+          <h3 style={{ margin: 0 }}>Strava</h3>
+          <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
+            Choose which runs, rides and workouts to bring into your training log.
+          </p>
         </div>
-
-        {connected && !activities && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <button className="btn secondary" onClick={openPicker} disabled={loadingActivities}>
-              {loadingActivities ? (<><span className="spinner" />Checking Strava…</>) : 'Import workouts'}
-            </button>
-            <button className="btn secondary" onClick={disconnect} disabled={disconnecting}>
-              {disconnecting ? 'Disconnecting…' : 'Disconnect'}
-            </button>
-          </div>
+        {!activities && (
+          <button className="btn secondary" onClick={openPicker} disabled={loadingActivities}>
+            {loadingActivities ? (<><span className="spinner" />Checking Strava…</>) : 'Import workouts'}
+          </button>
         )}
-
-        {!connected && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <a className="btn" href="/api/integrations/strava/connect">Connect Strava</a>
-          </div>
-        )}
-
-        {activities && (
-          <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
-            {activities.length === 0 ? (
-              <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>No new activities on Strava &mdash; you&rsquo;re already up to date.</p>
-            ) : (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <p style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{activities.length} new on Strava &mdash; pick which to import</p>
-                  <button type="button" onClick={toggleAll} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, cursor: 'pointer', padding: 0 }}>
-                    {selected.size === activities.length ? 'Deselect all' : 'Select all'}
-                  </button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 240, overflowY: 'auto' }}>
-                  {activities.map(a => (
-                    <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '6px 8px', borderRadius: 6, background: selected.has(a.id) ? 'var(--surface-2, rgba(127,127,127,.08))' : 'transparent', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggle(a.id)} />
-                      <span style={{ flex: 1 }}>
-                        <span style={{ display: 'block' }}>{a.name}</span>
-                        <span className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>
-                          {a.date} · {a.type} · {a.minutes}m{a.distanceKm ? ` · ${a.distanceKm} km` : ''}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                  <button className="btn" onClick={importSelected} disabled={importing || selected.size === 0}>
-                    {importing ? (<><span className="spinner" />Importing…</>) : `Import selected (${selected.size})`}
-                  </button>
-                  <button className="btn secondary" onClick={() => setActivities(null)} disabled={importing}>Cancel</button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {syncMsg && <p style={{ fontSize: 12.5, marginTop: 10, color: 'var(--text-2)' }}>{syncMsg}</p>}
       </div>
 
-      <p style={{ color: 'var(--muted)', fontSize: 11.5, marginTop: 16 }}>
-        Google Calendar and other integrations come later.
-      </p>
+      {activities && (
+        <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+          {activities.length === 0 ? (
+            <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>No new activities on Strava &mdash; you&rsquo;re already up to date.</p>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <p style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{activities.length} new on Strava &mdash; pick which to import</p>
+                <button type="button" onClick={toggleAll} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, cursor: 'pointer', padding: 0 }}>
+                  {selected.size === activities.length ? 'Deselect all' : 'Select all'}
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
+                {activities.map(a => (
+                  <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '6px 8px', borderRadius: 6, background: selected.has(a.id) ? 'var(--surface-2, rgba(127,127,127,.08))' : 'transparent', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggle(a.id)} />
+                    <span style={{ flex: 1 }}>
+                      <span style={{ display: 'block' }}>{a.name}</span>
+                      <span className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>
+                        {a.date} · {a.type} · {a.minutes}m{a.distanceKm ? ` · ${a.distanceKm} km` : ''}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <button className="btn" onClick={importSelected} disabled={importing || selected.size === 0}>
+                  {importing ? (<><span className="spinner" />Importing…</>) : `Import selected (${selected.size})`}
+                </button>
+                <button className="btn secondary" onClick={() => setActivities(null)} disabled={importing}>Cancel</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {syncMsg && <p style={{ fontSize: 12.5, marginTop: 10, color: 'var(--text-2)' }}>{syncMsg}</p>}
     </div>
   );
 }

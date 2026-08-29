@@ -1,5 +1,5 @@
 import { getCurrentUser } from '../../../lib/auth.js';
-import { ProfileForm, PasswordForm, BodyForm, StravaCard, AppleHealthCard } from '../settings-forms.js';
+import { ProfileForm, PasswordForm, BodyForm, StravaConnectionCard, AppleHealthCard } from '../settings-forms.js';
 import WeightCard from '../weight-card.js';
 
 export default async function SettingsPage({ searchParams }) {
@@ -13,7 +13,7 @@ export default async function SettingsPage({ searchParams }) {
       <BodyForm user={user} />
       <WeightCard initialWeightKg={user.weight_kg} />
       <PasswordForm />
-      <StravaCard connected={user.strava_connected} status={stravaStatus} />
+      <StravaConnectionCard connected={user.strava_connected} status={stravaStatus} />
       <AppleHealthCard connected={user.apple_health_connected} />
     </div>
   );

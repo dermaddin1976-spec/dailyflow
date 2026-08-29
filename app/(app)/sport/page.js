@@ -3,6 +3,7 @@ import db from '../../../lib/db.js';
 import InfoTip from '../info-tip.js';
 import { BarChart, lastNDates } from '../bar-chart.js';
 import SessionLogger from '../session-logger.js';
+import { StravaImportCard } from '../settings-forms.js';
 import { computeStreak } from '../../../lib/streak.js';
 
 export default async function SportPage() {
@@ -169,6 +170,8 @@ export default async function SportPage() {
           )}
         </div>
       </div>
+
+      <StravaImportCard connected={user.strava_connected} />
 
       <SessionLogger />
     </div>
