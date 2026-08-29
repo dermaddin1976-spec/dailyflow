@@ -1,4 +1,4 @@
-import { getCurrentUser } from '../../../lib/auth.js';
+import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import InfoTip from '../info-tip.js';
 import { BarChart, lastNDates } from '../bar-chart.js';
@@ -8,7 +8,7 @@ import ActivityIcon from '../activity-icon.js';
 import { computeStreak } from '../../../lib/streak.js';
 
 export default async function SportPage() {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const dates = lastNDates(7);
   const weekStart = dates[0], weekEnd = dates[dates.length - 1];
 

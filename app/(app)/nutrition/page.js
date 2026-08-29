@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCurrentUser } from '../../../lib/auth.js';
+import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import { computeTargets, hasBodyProfile } from '../../../lib/nutrition.js';
 import InfoTip from '../info-tip.js';
@@ -32,7 +32,7 @@ function MacroBar({ label, consumed, target, unit }) {
 }
 
 export default async function NutritionPage() {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const date = todayStr();
   const totals = await db.prepare(
     'SELECT COALESCE(SUM(calories),0) as calories, COALESCE(SUM(protein),0) as protein, COALESCE(SUM(carbs),0) as carbs, COALESCE(SUM(fat),0) as fat FROM meal_logs WHERE user_id=? AND date=?'

@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { getCurrentUser } from '../../../../lib/auth.js';
+import { requireUser } from '../../../../lib/auth.js';
 import { computeTargets, hasBodyProfile } from '../../../../lib/nutrition.js';
 import MealPlanner from '../../meal-planner.js';
 
 export default async function MealPlannerPage({ searchParams }) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const sp = await searchParams;
   const openId = sp && sp.open ? Number(sp.open) : null;
 

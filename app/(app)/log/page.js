@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCurrentUser } from '../../../lib/auth.js';
+import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import InfoTip from '../info-tip.js';
 
@@ -33,7 +33,7 @@ function describeEntry(row) {
 }
 
 export default async function LogPage() {
-  const user = await getCurrentUser();
+  const user = await requireUser();
 
   const rows = await db.prepare(`
     SELECT 'sleep' as kind, id, date, created_at, NULL as a, hours as b, quality as c, note as d FROM sleep_logs WHERE user_id=?

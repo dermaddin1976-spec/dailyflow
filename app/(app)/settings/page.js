@@ -1,9 +1,9 @@
-import { getCurrentUser } from '../../../lib/auth.js';
+import { requireUser } from '../../../lib/auth.js';
 import { ProfileForm, PasswordForm, BodyForm, StravaConnectionCard, AppleHealthCard } from '../settings-forms.js';
 import WeightCard from '../weight-card.js';
 
 export default async function SettingsPage({ searchParams }) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const sp = await searchParams;
   const stravaStatus = sp && sp.strava ? sp.strava : null;
   return (

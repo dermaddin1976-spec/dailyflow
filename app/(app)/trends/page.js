@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCurrentUser } from '../../../lib/auth.js';
+import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import InfoTip from '../info-tip.js';
 import { BarChart, lastNDates } from '../bar-chart.js';
@@ -15,7 +15,7 @@ function dateOffset(dateStr, offsetDays) {
 }
 
 export default async function TrendsPage({ searchParams }) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const sp = await searchParams;
   const requested = parseInt(sp && sp.days, 10);
   const rangeDays = RANGE_OPTIONS.includes(requested) ? requested : 7;

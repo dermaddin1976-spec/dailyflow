@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCurrentUser } from '../../../lib/auth.js';
+import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import DeadlinesCard from '../deadlines-card.js';
 import InfoTip from '../info-tip.js';
@@ -78,7 +78,7 @@ function scoreColor(score) {
 }
 
 export default async function TodayPage() {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const date = todayStr();
   const sleep = await db.prepare('SELECT * FROM sleep_logs WHERE user_id=? AND date=? ORDER BY id DESC LIMIT 1').get(user.id, date);
   const study = await db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM study_logs WHERE user_id=? AND date=?').get(user.id, date);
