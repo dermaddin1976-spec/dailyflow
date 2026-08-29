@@ -49,6 +49,20 @@ const ICONS = {
       <path d="M12 3.6v16.8M4.6 8.2h14.8M4.6 15.8h14.8" />
     </>
   ),
+  football: (
+    <>
+      <circle cx="12" cy="12" r="8.4" />
+      <path d="M12 7.2l3.6 2.6-1.4 4.2h-4.4l-1.4-4.2z" strokeLinejoin="round" />
+      <path d="M12 7.2V4.4M15.6 9.8l2.6-1.6M14.2 14l1.8 2.6M9.8 14l-1.8 2.6M8.4 9.8l-2.6-1.6" />
+    </>
+  ),
+  basketball: (
+    <>
+      <circle cx="12" cy="12" r="8.4" />
+      <path d="M12 3.6v16.8M3.6 12h16.8" />
+      <path d="M5.8 5.8c2.1 2 2.1 10.4 0 12.4M18.2 5.8c-2.1 2-2.1 10.4 0 12.4" />
+    </>
+  ),
   racquet: (
     <>
       <ellipse cx="11" cy="7.5" rx="5.4" ry="6.2" />
@@ -74,7 +88,9 @@ const MATCHERS = [
   [/strength|weight|gym|lift/i, 'strength'],
   [/hiit|crossfit|interval/i, 'hiit'],
   [/yoga|pilates|stretch/i, 'yoga'],
-  [/football|soccer|basketball/i, 'ball'],
+  [/football|soccer/i, 'football'],
+  [/basketball|hoops/i, 'basketball'],
+  [/volleyball|handball|rugby/i, 'ball'],
   [/tennis|badminton|squash/i, 'racquet'],
 ];
 

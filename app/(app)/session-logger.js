@@ -236,9 +236,26 @@ export default function SessionLogger() {
       {msg && <p className="error-text">{msg}</p>}
       <div className="field">
         <label>Type</label>
-        <select value={typeChoice} onChange={e => setTypeChoice(e.target.value)}>
-          {TYPE_PRESETS.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
+          {TYPE_PRESETS.map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTypeChoice(t)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                padding: '8px 14px', borderRadius: 'var(--radius-pill)',
+                border: `1px solid ${typeChoice === t ? 'var(--accent)' : 'var(--border-strong)'}`,
+                background: typeChoice === t ? 'var(--accent-soft)' : 'var(--surface)',
+                color: typeChoice === t ? 'var(--accent)' : 'var(--text)',
+                fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              <ActivityIcon type={t} size={15} />
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
       {typeChoice === 'Other' && (
         <div className="field">
