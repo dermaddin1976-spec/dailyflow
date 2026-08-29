@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../../lib/db.js';
 import { getCurrentUser } from '../../../../../lib/auth.js';
-import { refreshTokenIfNeeded, fetchActivities } from '../../../../../lib/strava.js';
+import { refreshTokenIfNeeded, fetchAllActivities } from '../../../../../lib/strava.js';
 
 function typeToLabel(activity) {
   return activity.sport_type || activity.type || 'Workout';
@@ -33,14 +33,14 @@ export async function POST(request) {
       ).run(accessToken, refreshToken, expiresAt, user.id);
     }
 
-    const activities = await fetchActivities(accessToken);
+    const activities = await fetchAllActivities(accessToken);
     const existing = db.prepare(
       'SELECT strava_activity_id FROM workout_logs WHERE user_id=? AND strava_activity_id IS NOT NULL'
     ).all(user.id);
     const seen = new Set(existing.map(r => r.strava_activity_id));
 
     const insert = db.prepare(
-      'INSERT INTO workout_logs (user_id, date, type, minutes, intensity, note, strava_activity_id, distance_km) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO workout_logs (user_id, date, type, minutes, intensity, note, strava_activity_id, distance_km, title) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
 
     let added = 0;
@@ -53,8 +53,7 @@ export async function POST(request) {
       const minutes = Math.round((a.moving_time || 0) / 60);
       if (minutes <= 0) continue;
       const distanceKm = a.distance ? Number((a.distance / 1000).toFixed(2)) : null;
-      const note = distanceKm ? `Synced from Strava · ${distanceKm} km` : 'Synced from Strava';
-      insert.run(user.id, date, typeToLabel(a), minutes, null, note, activityId, distanceKm);
+      insert.run(user.id, date, typeToLabel(a), minutes, null, 'Synced from Strava', activityId, distanceKm, a.name || null);
       seen.add(activityId);
       added++;
     }

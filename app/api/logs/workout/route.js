@@ -15,6 +15,6 @@ export async function POST(request) {
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
-  const rows = db.prepare('SELECT * FROM workout_logs WHERE user_id=? ORDER BY id DESC LIMIT 20').all(user.id);
+  const rows = db.prepare('SELECT * FROM workout_logs WHERE user_id=? ORDER BY id DESC LIMIT 300').all(user.id);
   return NextResponse.json({ logs: rows });
 }

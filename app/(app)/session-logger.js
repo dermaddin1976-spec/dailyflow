@@ -2,8 +2,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import InfoTip from './info-tip.js';
+import ActivityIcon from './activity-icon.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function formatPace(minPerKm) {
+  const mins = Math.floor(minPerKm);
+  const secs = Math.round((minPerKm - mins) * 60);
+  return mins + ':' + String(secs).padStart(2, '0') + '/km';
+}
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -82,20 +89,39 @@ function WorkoutRow({ item, onSave, onDelete }) {
     );
   }
 
+  const isRun = /run/i.test(item.type || '');
+  const paceStr = (isRun && item.distance_km > 0 && item.minutes > 0) ? formatPace(item.minutes / item.distance_km) : null;
+  const metaParts = [
+    item.title ? item.type : null,
+    item.date,
+    item.minutes ? `${item.minutes}m` : null,
+    item.distance_km ? `${item.distance_km} km` : null,
+    paceStr,
+    item.intensity ? `intensity ${item.intensity}` : null,
+  ].filter(Boolean);
+  const showNote = item.note && item.note !== 'Synced from Strava';
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: 13 }}>
-        <span style={{ color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.type}</span>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
+          <span style={{ color: 'var(--text-2)', marginTop: 1 }}><ActivityIcon type={item.type} size={18} /></span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {item.title || item.type}
+            </div>
+            <div className="mono" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>
+              {metaParts.join(' · ')}
+            </div>
+          </div>
+        </div>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <span className="mono" style={{ color: 'var(--muted)', fontSize: 11.5 }}>
-            {item.minutes}m{item.intensity ? ` · intensity ${item.intensity}` : ''}
-          </span>
           <button type="button" onClick={() => setEditing(true)} aria-label="Edit session" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0 }}>&#9998;</button>
-          <button type="button" onClick={() => onDelete(item.id)} aria-label="Delete session" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 15, cursor: 'pointer', padding: 0 }}>&times;</button>
+          <button type="button" onClick={() => { if (window.confirm('Delete this session?')) onDelete(item.id); }} aria-label="Delete session" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 15, cursor: 'pointer', padding: 0 }}>&times;</button>
         </span>
       </div>
-      {item.note && (
-        <div className="mono" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      {showNote && (
+        <div className="mono" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, marginLeft: 28, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {item.note}
         </div>
       )}
@@ -113,6 +139,7 @@ export default function SessionLogger() {
   const [msg, setMsg] = useState('');
   const [savedFlash, setSavedFlash] = useState('');
   const [items, setItems] = useState([]);
+  const [historyQuery, setHistoryQuery] = useState('');
 
   const [estimating, setEstimating] = useState(false);
   const [estimateMsg, setEstimateMsg] = useState('');
@@ -236,10 +263,30 @@ export default function SessionLogger() {
       {items.length === 0 ? (
         <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 16 }}>Nothing logged yet.</p>
       ) : (
-        <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {items.slice(0, 8).map(i => (
-            <WorkoutRow key={i.id} item={i} onSave={saveWorkout} onDelete={deleteWorkout} />
-          ))}
+        <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+          {items.length > 5 && (
+            <input
+              type="text" value={historyQuery} onChange={e => setHistoryQuery(e.target.value)}
+              placeholder={`Search ${items.length} sessions…`}
+              style={{ ...miniFieldStyle, marginBottom: 10 }}
+            />
+          )}
+          {(() => {
+            const q = historyQuery.trim().toLowerCase();
+            const filtered = q
+              ? items.filter(i => (i.title || '').toLowerCase().includes(q) || (i.type || '').toLowerCase().includes(q) || (i.note || '').toLowerCase().includes(q))
+              : items;
+            if (filtered.length === 0) {
+              return <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>No sessions match &ldquo;{historyQuery}&rdquo;.</p>;
+            }
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 420, overflowY: 'auto' }}>
+                {filtered.map(i => (
+                  <WorkoutRow key={i.id} item={i} onSave={saveWorkout} onDelete={deleteWorkout} />
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
     </form>

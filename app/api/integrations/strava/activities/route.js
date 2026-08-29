@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../../lib/db.js';
 import { getCurrentUser } from '../../../../../lib/auth.js';
-import { refreshTokenIfNeeded, fetchActivities } from '../../../../../lib/strava.js';
+import { refreshTokenIfNeeded, fetchAllActivities } from '../../../../../lib/strava.js';
 
 function typeToLabel(activity) {
   return activity.sport_type || activity.type || 'Workout';
@@ -26,7 +26,7 @@ export async function GET() {
       ).run(accessToken, refreshToken, expiresAt, user.id);
     }
 
-    const activities = await fetchActivities(accessToken);
+    const activities = await fetchAllActivities(accessToken);
     const existing = db.prepare(
       'SELECT strava_activity_id FROM workout_logs WHERE user_id=? AND strava_activity_id IS NOT NULL'
     ).all(user.id);
@@ -48,7 +48,7 @@ export async function GET() {
       })
       .filter(a => a.date && a.minutes > 0);
 
-    return NextResponse.json({ ok: true, activities: list });
+    return NextResponse.json({ ok: true, activities: list, fetched: activities.length });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Could not load activities.' }, { status: 502 });
   }

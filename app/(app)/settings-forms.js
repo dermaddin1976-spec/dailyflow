@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import ActivityIcon from './activity-icon.js';
 
 export function ProfileForm({ user }) {
   const router = useRouter();
@@ -231,6 +232,7 @@ export function StravaImportCard({ connected }) {
   const [selected, setSelected] = useState(new Set());
   const [importing, setImporting] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+  const [query, setQuery] = useState('');
 
   if (!connected) return null;
 
@@ -243,6 +245,7 @@ export function StravaImportCard({ connected }) {
       if (!res.ok) { setSyncMsg(data.error || 'Could not load activities.'); return; }
       setActivities(data.activities);
       setSelected(new Set(data.activities.map(a => a.id)));
+      setQuery('');
     } catch (err) {
       setSyncMsg('Something went wrong reaching Strava.');
     } finally {
@@ -258,9 +261,22 @@ export function StravaImportCard({ connected }) {
     });
   }
 
-  function toggleAll() {
-    if (!activities) return;
-    setSelected(prev => (prev.size === activities.length ? new Set() : new Set(activities.map(a => a.id))));
+  const visible = activities
+    ? activities.filter(a => {
+        if (!query.trim()) return true;
+        const q = query.trim().toLowerCase();
+        return a.name.toLowerCase().includes(q) || a.type.toLowerCase().includes(q);
+      })
+    : [];
+
+  function toggleAllVisible() {
+    const visibleIds = visible.map(a => a.id);
+    const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selected.has(id));
+    setSelected(prev => {
+      const next = new Set(prev);
+      visibleIds.forEach(id => { if (allVisibleSelected) next.delete(id); else next.add(id); });
+      return next;
+    });
   }
 
   async function importSelected() {
@@ -282,6 +298,9 @@ export function StravaImportCard({ connected }) {
       setImporting(false);
     }
   }
+
+  const visibleIds = visible.map(a => a.id);
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selected.has(id));
 
   return (
     <div className="card" style={{ marginTop: 20 }}>
@@ -305,24 +324,47 @@ export function StravaImportCard({ connected }) {
             <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>No new activities on Strava &mdash; you&rsquo;re already up to date.</p>
           ) : (
             <>
+              <input
+                type="text" value={query} onChange={e => setQuery(e.target.value)}
+                placeholder={`Search ${activities.length} activities by name or type…`}
+                style={{
+                  width: '100%', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+                  background: 'var(--surface-2)', color: 'var(--text)', padding: '8px 10px', fontSize: 13,
+                  marginBottom: 10, boxSizing: 'border-box',
+                }}
+              />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <p style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{activities.length} new on Strava &mdash; pick which to import</p>
-                <button type="button" onClick={toggleAll} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, cursor: 'pointer', padding: 0 }}>
-                  {selected.size === activities.length ? 'Deselect all' : 'Select all'}
+                <p style={{ fontSize: 12, color: 'var(--muted)' }}>
+                  {visible.length} of {activities.length} shown &middot; {selected.size} selected
+                </p>
+                <button type="button" onClick={toggleAllVisible} disabled={visible.length === 0} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, cursor: 'pointer', padding: 0 }}>
+                  {allVisibleSelected ? 'Deselect shown' : 'Select shown'}
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
-                {activities.map(a => (
-                  <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '6px 8px', borderRadius: 6, background: selected.has(a.id) ? 'var(--surface-2, rgba(127,127,127,.08))' : 'transparent', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggle(a.id)} />
-                    <span style={{ flex: 1 }}>
-                      <span style={{ display: 'block' }}>{a.name}</span>
-                      <span className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>
-                        {a.date} · {a.type} · {a.minutes}m{a.distanceKm ? ` · ${a.distanceKm} km` : ''}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 340, overflowY: 'auto' }}>
+                {visible.map(a => (
+                  <label
+                    key={a.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '9px 10px', borderRadius: 'var(--radius-sm)',
+                      background: selected.has(a.id) ? 'var(--surface-2)' : 'transparent', cursor: 'pointer',
+                    }}
+                  >
+                    <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggle(a.id)} style={{ flexShrink: 0 }} />
+                    <span style={{ color: 'var(--text-2)' }}><ActivityIcon type={a.type} size={19} /></span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: 13.5, fontWeight: 500, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {a.name}
+                      </span>
+                      <span className="mono" style={{ color: 'var(--muted)', fontSize: 11, display: 'block' }}>
+                        {a.type} &middot; {a.date} &middot; {a.minutes}m{a.distanceKm ? ` · ${a.distanceKm} km` : ''}
                       </span>
                     </span>
                   </label>
                 ))}
+                {visible.length === 0 && (
+                  <p style={{ color: 'var(--muted)', fontSize: 12.5, padding: '8px 4px' }}>No activities match &ldquo;{query}&rdquo;.</p>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <button className="btn" onClick={importSelected} disabled={importing || selected.size === 0}>

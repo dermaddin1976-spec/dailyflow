@@ -4,6 +4,7 @@ import InfoTip from '../info-tip.js';
 import { BarChart, lastNDates } from '../bar-chart.js';
 import SessionLogger from '../session-logger.js';
 import { StravaImportCard } from '../settings-forms.js';
+import ActivityIcon from '../activity-icon.js';
 import { computeStreak } from '../../../lib/streak.js';
 
 export default async function SportPage() {
@@ -132,7 +133,10 @@ export default async function SportPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
               {personalRecords.map(pr => (
                 <div key={pr.type} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                  <span style={{ color: 'var(--text-2)' }}>{pr.type}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-2)' }}>
+                    <ActivityIcon type={pr.type} size={16} />
+                    {pr.type}
+                  </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span className="mono" style={{ fontWeight: 600 }}>{pr.minutes}m</span>
                     <span className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>{pr.date}</span>
