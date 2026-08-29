@@ -366,7 +366,7 @@ export function StravaImportCard({ connected }) {
                   <p style={{ color: 'var(--muted)', fontSize: 12.5, padding: '8px 4px' }}>No activities match &ldquo;{query}&rdquo;.</p>
                 )}
               </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <div className="btn-row" style={{ marginTop: 12 }}>
                 <button className="btn" onClick={importSelected} disabled={importing || selected.size === 0}>
                   {importing ? (<><span className="spinner" />Importing…</>) : `Import selected (${selected.size})`}
                 </button>
@@ -449,7 +449,7 @@ export function AppleHealthCard({ connected }) {
           </div>
         </div>
       ) : (
-        <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+        <div className="btn-row" style={{ marginTop: 14 }}>
           <button className="btn secondary" onClick={generate} disabled={generating}>
             {generating ? 'Generating…' : connected ? 'Regenerate token' : 'Generate access token'}
           </button>

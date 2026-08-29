@@ -370,7 +370,7 @@ function PlanDetail({ planId, onBack, onDeleted }) {
       <button className="btn secondary" onClick={onBack} style={{ marginBottom: 20 }}>&larr; Back to plans</button>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
         <h1 style={{ fontSize: 22, margin: 0 }}>{plan.title}</h1>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="btn-row" style={{ alignItems: 'center' }}>
           <button className="btn secondary" onClick={regenerate} disabled={regenerating}>
             {regenerating ? (<><span className="spinner" />Regenerating…</>) : 'Regenerate'}
           </button>

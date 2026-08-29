@@ -66,8 +66,8 @@ function NoteEditor({ note, onSave, onDelete, onBack }) {
   return (
     <div>
       <button className="btn secondary" onClick={onBack} style={{ marginBottom: 20 }}>&larr; Back to notes</button>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-        <h1 style={{ fontSize: 22, margin: 0 }}>{note.source_title}</h1>
+      <div className="btn-row" style={{ justifyContent: 'space-between', marginBottom: 20 }}>
+        <h1 style={{ fontSize: 22, margin: 0, overflowWrap: 'break-word', minWidth: 0 }}>{note.source_title}</h1>
         <span style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
           {!editing && (
             <button type="button" className="btn secondary" onClick={startEdit} style={{ padding: '8px 16px', fontSize: 13 }}>Edit</button>

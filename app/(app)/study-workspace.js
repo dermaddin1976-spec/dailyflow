@@ -317,7 +317,7 @@ export default function StudyWorkspace() {
             <p className="mono" style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 10 }}>
               Card {clampedIndex + 1} / {cards.length}
             </p>
-            <div className="card" style={{ minHeight: 420, padding: 40, display: 'flex', flexDirection: 'column' }}>
+            <div className="card flashcard-edit-card" style={{ minHeight: 420, display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="mono" style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6 }}>Question</span>
                 <button onClick={deleteCurrent} aria-label="Delete card" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, lineHeight: 1, cursor: 'pointer' }}>&times;</button>
@@ -337,7 +337,7 @@ export default function StudyWorkspace() {
                 style={{ ...editFieldStyle, fontSize: 17, marginTop: 10, flex: 1 }}
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+            <div className="btn-row" style={{ justifyContent: 'space-between', marginTop: 16 }}>
               <button className="btn secondary" disabled={clampedIndex === 0} onClick={() => setManageIndex(i => i - 1)}>&larr; Previous</button>
               <button className="btn" onClick={saveCurrent}>{manageSavedFlash ? 'Saved' : 'Save changes'}</button>
               <button className="btn secondary" disabled={clampedIndex === cards.length - 1} onClick={() => setManageIndex(i => i + 1)}>Next &rarr;</button>
