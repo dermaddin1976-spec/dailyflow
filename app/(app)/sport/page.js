@@ -29,12 +29,13 @@ export default async function SportPage() {
   const streak = computeStreak(allDates);
 
   const personalRecords = await db.prepare(`
-    SELECT w.type, w.minutes, w.intensity, w.date FROM workout_logs w
-    WHERE w.user_id=? AND w.minutes = (
-      SELECT MAX(w2.minutes) FROM workout_logs w2 WHERE w2.user_id = w.user_id AND w2.type = w.type
-    )
-    GROUP BY w.type
-    ORDER BY w.minutes DESC
+    SELECT * FROM (
+      SELECT DISTINCT ON (w.type) w.type, w.minutes, w.intensity, w.date
+      FROM workout_logs w
+      WHERE w.user_id=?
+      ORDER BY w.type, w.minutes DESC
+    ) t
+    ORDER BY t.minutes DESC
   `).all(user.id);
 
   const longestRun = await db.prepare(`
