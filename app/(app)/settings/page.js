@@ -1,5 +1,5 @@
 import { requireUser } from '../../../lib/auth.js';
-import { ProfileForm, PasswordForm, BodyForm, StravaConnectionCard, AppleHealthCard, AdminPasswordResetsCard } from '../settings-forms.js';
+import { ProfileForm, PasswordForm, BodyForm, StravaConnectionCard, AppleHealthCard, AdminPasswordResetsCard, AdminUsersCard } from '../settings-forms.js';
 import WeightCard from '../weight-card.js';
 import { isAdminEmail } from '../../../lib/config.js';
 
@@ -17,6 +17,7 @@ export default async function SettingsPage({ searchParams }) {
       <StravaConnectionCard connected={user.strava_connected} status={stravaStatus} />
       <AppleHealthCard connected={user.apple_health_connected} />
       {isAdminEmail(user.email) && <AdminPasswordResetsCard />}
+      {isAdminEmail(user.email) && <AdminUsersCard />}
     </div>
   );
 }

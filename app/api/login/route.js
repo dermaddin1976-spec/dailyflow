@@ -15,6 +15,9 @@ export async function POST(request) {
   if (!user || !verifyPassword(password || '', user.password_hash)) {
     return NextResponse.json({ error: 'Incorrect email or password.' }, { status: 401 });
   }
+  if (user.banned_at) {
+    return NextResponse.json({ error: 'This account has been suspended.' }, { status: 403 });
+  }
   const { token, expires } = await createSession(user.id);
   const cookieStore = await cookies();
   cookieStore.set('anchor_session', token, { httpOnly: true, sameSite: 'lax', expires: new Date(expires), path: '/' });

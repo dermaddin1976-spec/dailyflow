@@ -581,3 +581,77 @@ export function AdminPasswordResetsCard() {
     </div>
   );
 }
+
+export function AdminUsersCard() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null);
+  const [err, setErr] = useState('');
+
+  async function refresh() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/users');
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data.users || []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => { refresh(); }, []);
+
+  async function toggleBan(user) {
+    const action = user.banned_at ? 'unban' : 'ban';
+    if (action === 'ban' && !window.confirm(`Ban ${user.email}? They'll be signed out everywhere and won't be able to log back in.`)) return;
+    setErr(''); setBusyId(user.id);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.error || 'Something went wrong.'); return; }
+      refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div className="card" style={{ marginTop: 20 }}>
+      <h3>Accounts</h3>
+      <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
+        Everyone who has signed up. Banning signs someone out everywhere and blocks them from logging back in.
+      </p>
+      {err && <p className="error-text">{err}</p>}
+      <div style={{ marginTop: 14 }}>
+        {loading ? (
+          <p style={{ fontSize: 12.5, color: 'var(--muted)' }}>Loading…</p>
+        ) : users.length === 0 ? (
+          <p style={{ fontSize: 12.5, color: 'var(--muted)' }}>No accounts yet.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {users.map(u => (
+              <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                  {u.name ? `${u.name} — ` : ''}{u.email}
+                  {u.banned_at && <span style={{ color: 'var(--critical)', marginLeft: 8 }}>Banned</span>}
+                </span>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  style={{ fontSize: 12, padding: '6px 12px', flexShrink: 0, ...(u.banned_at ? {} : { color: 'var(--critical)', borderColor: 'var(--critical)' }) }}
+                  disabled={busyId === u.id}
+                  onClick={() => toggleBan(u)}
+                >
+                  {busyId === u.id ? '…' : u.banned_at ? 'Unban' : 'Ban'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
