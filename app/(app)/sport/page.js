@@ -35,6 +35,24 @@ export default async function SportPage() {
     ORDER BY w.minutes DESC
   `).all(user.id);
 
+  const longestRun = db.prepare(`
+    SELECT date, distance_km, minutes FROM workout_logs
+    WHERE user_id=? AND distance_km IS NOT NULL AND type LIKE '%Run%'
+    ORDER BY distance_km DESC LIMIT 1
+  `).get(user.id);
+
+  const fastestRun = db.prepare(`
+    SELECT date, distance_km, minutes, (minutes * 1.0 / distance_km) as paceMinPerKm FROM workout_logs
+    WHERE user_id=? AND distance_km IS NOT NULL AND distance_km > 0 AND minutes IS NOT NULL AND minutes > 0 AND type LIKE '%Run%'
+    ORDER BY paceMinPerKm ASC LIMIT 1
+  `).get(user.id);
+
+  function formatPace(minPerKm) {
+    const mins = Math.floor(minPerKm);
+    const secs = Math.round((minPerKm - mins) * 60);
+    return mins + ':' + String(secs).padStart(2, '0') + '/km';
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -102,8 +120,9 @@ export default async function SportPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <h3 style={{ margin: 0 }}>Personal records</h3>
             <InfoTip>
-              Your longest logged session for each workout type, all-time. New records show up here automatically
-              the moment you log a session that beats the old one.
+              Your longest logged session for each workout type, all-time, plus your longest and fastest run by
+              distance from Strava-synced runs. New records show up here automatically the moment a session beats
+              the old one.
             </InfoTip>
           </div>
           {personalRecords.length === 0 ? (
@@ -119,6 +138,33 @@ export default async function SportPage() {
                   </span>
                 </div>
               ))}
+            </div>
+          )}
+          {(longestRun || fastestRun) && (
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 10,
+              marginTop: personalRecords.length ? 14 : 10,
+              paddingTop: personalRecords.length ? 14 : 0,
+              borderTop: personalRecords.length ? '1px solid var(--border)' : 'none',
+            }}>
+              {longestRun && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                  <span style={{ color: 'var(--text-2)' }}>Longest run</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="mono" style={{ fontWeight: 600 }}>{longestRun.distance_km} km</span>
+                    <span className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>{longestRun.date}</span>
+                  </span>
+                </div>
+              )}
+              {fastestRun && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                  <span style={{ color: 'var(--text-2)' }}>Fastest run</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="mono" style={{ fontWeight: 600 }}>{formatPace(fastestRun.paceMinPerKm)}</span>
+                    <span className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>{fastestRun.date}</span>
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>

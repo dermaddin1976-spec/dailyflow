@@ -168,22 +168,59 @@ export function PasswordForm() {
 
 export function StravaCard({ connected, status }) {
   const router = useRouter();
-  const [syncing, setSyncing] = useState(false);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  const [activities, setActivities] = useState(null);
+  const [selected, setSelected] = useState(new Set());
+  const [importing, setImporting] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
   const [disconnecting, setDisconnecting] = useState(false);
 
-  async function sync() {
-    setSyncing(true); setSyncMsg('');
+  async function openPicker() {
+    setSyncMsg('');
+    setLoadingActivities(true);
     try {
-      const res = await fetch('/api/integrations/strava/sync', { method: 'POST' });
+      const res = await fetch('/api/integrations/strava/activities');
       const data = await res.json();
-      if (!res.ok) { setSyncMsg(data.error || 'Sync failed.'); return; }
-      setSyncMsg(data.added > 0 ? `Added ${data.added} new activit${data.added === 1 ? 'y' : 'ies'}.` : 'Already up to date — nothing new.');
+      if (!res.ok) { setSyncMsg(data.error || 'Could not load activities.'); return; }
+      setActivities(data.activities);
+      setSelected(new Set(data.activities.map(a => a.id)));
+    } catch (err) {
+      setSyncMsg('Something went wrong reaching Strava.');
+    } finally {
+      setLoadingActivities(false);
+    }
+  }
+
+  function toggle(id) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (!activities) return;
+    setSelected(prev => (prev.size === activities.length ? new Set() : new Set(activities.map(a => a.id))));
+  }
+
+  async function importSelected() {
+    setImporting(true); setSyncMsg('');
+    try {
+      const res = await fetch('/api/integrations/strava/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activityIds: Array.from(selected) }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setSyncMsg(data.error || 'Import failed.'); return; }
+      setSyncMsg(data.added > 0 ? `Added ${data.added} new activit${data.added === 1 ? 'y' : 'ies'}.` : 'Nothing imported.');
+      setActivities(null);
       router.refresh();
     } catch (err) {
       setSyncMsg('Something went wrong reaching Strava.');
     } finally {
-      setSyncing(false);
+      setImporting(false);
     }
   }
 
@@ -216,27 +253,67 @@ export function StravaCard({ connected, status }) {
           <div>
             <p style={{ fontWeight: 600, fontSize: 14 }}>Strava</p>
             <p style={{ color: 'var(--text-2)', fontSize: 12.5 }}>
-              {connected ? 'Runs, rides and other activities sync into your training log.' : 'Sync your runs, rides and workouts automatically.'}
+              {connected ? 'Choose which runs, rides and workouts to bring into your training log.' : 'Sync your runs, rides and workouts automatically.'}
             </p>
           </div>
           {connected ? (
             <span className="mono" style={{ fontSize: 11, color: 'var(--good)', flexShrink: 0 }}>Connected</span>
           ) : null}
         </div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          {connected ? (
-            <>
-              <button className="btn secondary" onClick={sync} disabled={syncing}>
-                {syncing ? (<><span className="spinner" />Syncing…</>) : 'Sync now'}
-              </button>
-              <button className="btn secondary" onClick={disconnect} disabled={disconnecting}>
-                {disconnecting ? 'Disconnecting…' : 'Disconnect'}
-              </button>
-            </>
-          ) : (
+
+        {connected && !activities && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <button className="btn secondary" onClick={openPicker} disabled={loadingActivities}>
+              {loadingActivities ? (<><span className="spinner" />Checking Strava…</>) : 'Import workouts'}
+            </button>
+            <button className="btn secondary" onClick={disconnect} disabled={disconnecting}>
+              {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+            </button>
+          </div>
+        )}
+
+        {!connected && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <a className="btn" href="/api/integrations/strava/connect">Connect Strava</a>
-          )}
-        </div>
+          </div>
+        )}
+
+        {activities && (
+          <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            {activities.length === 0 ? (
+              <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>No new activities on Strava &mdash; you&rsquo;re already up to date.</p>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <p style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{activities.length} new on Strava &mdash; pick which to import</p>
+                  <button type="button" onClick={toggleAll} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, cursor: 'pointer', padding: 0 }}>
+                    {selected.size === activities.length ? 'Deselect all' : 'Select all'}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 240, overflowY: 'auto' }}>
+                  {activities.map(a => (
+                    <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '6px 8px', borderRadius: 6, background: selected.has(a.id) ? 'var(--surface-2, rgba(127,127,127,.08))' : 'transparent', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggle(a.id)} />
+                      <span style={{ flex: 1 }}>
+                        <span style={{ display: 'block' }}>{a.name}</span>
+                        <span className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>
+                          {a.date} · {a.type} · {a.minutes}m{a.distanceKm ? ` · ${a.distanceKm} km` : ''}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button className="btn" onClick={importSelected} disabled={importing || selected.size === 0}>
+                    {importing ? (<><span className="spinner" />Importing…</>) : `Import selected (${selected.size})`}
+                  </button>
+                  <button className="btn secondary" onClick={() => setActivities(null)} disabled={importing}>Cancel</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {syncMsg && <p style={{ fontSize: 12.5, marginTop: 10, color: 'var(--text-2)' }}>{syncMsg}</p>}
       </div>
 

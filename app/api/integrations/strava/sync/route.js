@@ -7,9 +7,16 @@ function typeToLabel(activity) {
   return activity.sport_type || activity.type || 'Workout';
 }
 
-export async function POST() {
+export async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
+
+  let body = {};
+  try { body = await request.json(); } catch { /* no body sent */ }
+  const selectedIds = Array.isArray(body.activityIds) ? new Set(body.activityIds.map(String)) : null;
+  if (!selectedIds || selectedIds.size === 0) {
+    return NextResponse.json({ error: 'No activities selected.' }, { status: 400 });
+  }
 
   const row = db.prepare(
     'SELECT strava_access_token, strava_refresh_token, strava_token_expires_at FROM users WHERE id=?'
@@ -33,20 +40,21 @@ export async function POST() {
     const seen = new Set(existing.map(r => r.strava_activity_id));
 
     const insert = db.prepare(
-      'INSERT INTO workout_logs (user_id, date, type, minutes, intensity, note, strava_activity_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO workout_logs (user_id, date, type, minutes, intensity, note, strava_activity_id, distance_km) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     );
 
     let added = 0;
     for (const a of activities) {
       const activityId = String(a.id);
       if (seen.has(activityId)) continue;
+      if (!selectedIds.has(activityId)) continue;
       const date = (a.start_date_local || a.start_date || '').slice(0, 10);
       if (!date) continue;
       const minutes = Math.round((a.moving_time || 0) / 60);
       if (minutes <= 0) continue;
-      const distanceKm = a.distance ? (a.distance / 1000).toFixed(1) : null;
+      const distanceKm = a.distance ? Number((a.distance / 1000).toFixed(2)) : null;
       const note = distanceKm ? `Synced from Strava · ${distanceKm} km` : 'Synced from Strava';
-      insert.run(user.id, date, typeToLabel(a), minutes, null, note, activityId);
+      insert.run(user.id, date, typeToLabel(a), minutes, null, note, activityId, distanceKm);
       seen.add(activityId);
       added++;
     }
