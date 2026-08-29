@@ -53,12 +53,13 @@ body{
 ::selection{ background: var(--accent); color: var(--accent-ink); }
 a{ color: var(--accent); }
 button, input, select{ font-family: inherit; }
+input, select, textarea{ min-width:0; }
 button{ -webkit-tap-highlight-color: transparent; cursor:pointer; }
 h1,h2,h3{ font-weight:600; letter-spacing:-.01em; text-wrap: balance; margin:0; }
 .mono{ font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:22px; }
-.field{ display:flex; flex-direction:column; gap:6px; margin-top:14px; }
+.field{ display:flex; flex-direction:column; gap:6px; margin-top:14px; min-width:0; }
 .field label{ font-size:12.5px; font-weight:600; color:var(--text-2); }
 .field input, .field select{
   border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:var(--surface-2);
