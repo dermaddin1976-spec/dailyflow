@@ -69,7 +69,7 @@ function MealRow({ item, onSave, onDelete }) {
     return (
       <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: 10, background: 'var(--surface-2)' }}>
         <input value={description} onChange={e => setDescription(e.target.value)} style={{ ...miniFieldStyle, marginBottom: 6 }} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+        <div className="edit-fields-4">
           <input type="number" min="0" placeholder="cal" value={calories} onChange={e => setCalories(e.target.value)} style={miniFieldStyle} />
           <input type="number" min="0" placeholder="protein" value={protein} onChange={e => setProtein(e.target.value)} style={miniFieldStyle} />
           <input type="number" min="0" placeholder="carbs" value={carbs} onChange={e => setCarbs(e.target.value)} style={miniFieldStyle} />
@@ -84,7 +84,7 @@ function MealRow({ item, onSave, onDelete }) {
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: 13 }}>
+    <div className="meal-row">
       <span style={{ color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</span>
       <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         <span className="mono" style={{ color: 'var(--muted)', fontSize: 11.5 }}>
@@ -341,7 +341,7 @@ export default function MealLogger() {
           <button type="button" className="btn secondary wide" style={{ marginTop: 2 }} onClick={closeScanner}>Cancel</button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: 8, marginTop: 14 }}>
+        <div className="action-grid">
           <button type="button" className="btn secondary wide" onClick={openCamera} disabled={estimating}>
             {estimating ? (<><span className="spinner" />Estimating…</>) : 'Take a photo'}
           </button>

@@ -165,7 +165,7 @@ export default async function TodayPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 16 }}>
+      <div className="tile-grid">
         {tiles.map(t => (
           <div className="card" key={t.label}>
             <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em' }}>{t.label}</div>

@@ -46,7 +46,7 @@ export default async function SleepPage() {
 
         <div className="card">
           <h3 style={{ marginBottom: 14 }}>This week</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div className="mini-stats">
             <div>
               <div style={{ fontSize: 11.5, color: 'var(--muted)', letterSpacing: '.03em' }}>AVG HOURS</div>
               <div className="mono" style={{ fontSize: 20, fontWeight: 700, marginTop: 2 }}>
