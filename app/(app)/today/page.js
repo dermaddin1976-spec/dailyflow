@@ -77,6 +77,14 @@ function scoreColor(score) {
   return 'var(--critical)';
 }
 
+function ringDash(score, radius) {
+  const c = 2 * Math.PI * radius;
+  const pct = score == null ? 0.04 : Math.max(0.02, Math.min(1, score / 100));
+  const filled = +(c * pct).toFixed(1);
+  const rest = +(c - filled).toFixed(1);
+  return `${filled} ${rest}`;
+}
+
 export default async function TodayPage() {
   const user = await requireUser();
   const date = todayStr();
@@ -142,23 +150,33 @@ export default async function TodayPage() {
             so the score fills in as you log more.
           </InfoTip>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
-          <div style={{ textAlign: 'center', minWidth: 100 }}>
-            <div className="mono" style={{ fontSize: 44, fontWeight: 700, color: scoreColor(readiness.overall) }}>
-              {readiness.overall != null ? readiness.overall : '—'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', width: 176, height: 176, flexShrink: 0 }}>
+            <svg width="176" height="176" viewBox="0 0 176 176" style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 45%, transparent))' }}>
+              <circle cx="88" cy="88" r="78" fill="none" stroke="var(--border)" strokeWidth="10" />
+              <circle cx="88" cy="88" r="78" fill="none" stroke={scoreColor(readiness.overall)} strokeWidth="10" strokeLinecap="round" strokeDasharray={ringDash(readiness.overall, 78)} />
+            </svg>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="mono" style={{ fontSize: 42, fontWeight: 700, color: 'var(--text)' }}>
+                {readiness.overall != null ? readiness.overall : '—'}
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{readiness.label}</span>
             </div>
-            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{readiness.label}</div>
           </div>
-          <div style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 280, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))', gap: 20 }}>
             {readiness.components.map(c => (
-              <div key={c.name}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 4 }}>
-                  <span style={{ color: 'var(--text-2)' }}>{c.name}</span>
-                  <span className="mono" style={{ color: 'var(--muted)' }}>{c.reason}</span>
+              <div key={c.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
+                <div style={{ position: 'relative', width: 62, height: 62 }}>
+                  <svg width="62" height="62" viewBox="0 0 62 62" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="31" cy="31" r="25" fill="none" stroke="var(--border)" strokeWidth="6" />
+                    <circle cx="31" cy="31" r="25" fill="none" stroke={scoreColor(c.score)} strokeWidth="6" strokeLinecap="round" strokeDasharray={ringDash(c.score, 25)} />
+                  </svg>
+                  <div className="mono" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>
+                    {c.score != null ? c.score : '—'}
+                  </div>
                 </div>
-                <div style={{ height: 6, borderRadius: 3, background: 'var(--surface-2)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${c.score ?? 6}%`, background: scoreColor(c.score), borderRadius: 3 }} />
-                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-2)' }}>{c.name}</div>
+                <div className="mono" style={{ fontSize: 10, color: 'var(--muted)' }}>{c.reason}</div>
               </div>
             ))}
           </div>
@@ -166,12 +184,31 @@ export default async function TodayPage() {
       </div>
 
       <div className="tile-grid">
-        {tiles.map(t => (
-          <div className="card" key={t.label}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em' }}>{t.label}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }} className="mono">{t.value}</div>
-          </div>
-        ))}
+        {tiles.map(t => {
+          const isStreak = t.label === 'STREAK' && streak > 0;
+          return (
+            <div
+              className="card"
+              key={t.label}
+              style={isStreak ? {
+                background: 'linear-gradient(160deg, color-mix(in srgb, var(--warning) 20%, var(--surface)), color-mix(in srgb, var(--surface) 82%, transparent))',
+                borderColor: 'color-mix(in srgb, var(--warning) 32%, var(--border))',
+              } : undefined}
+            >
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em' }}>{t.label}</div>
+              <div
+                style={{
+                  fontSize: 28, fontWeight: 700, marginTop: 6,
+                  color: isStreak ? '#ffb088' : undefined,
+                  textShadow: isStreak ? '0 0 18px color-mix(in srgb, var(--warning) 55%, transparent)' : undefined,
+                }}
+                className="mono"
+              >
+                {t.value}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {todaysMeals && (
