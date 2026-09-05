@@ -56,25 +56,52 @@ function Bubble({ children }) {
 }
 
 const DEFAULT_ANSWERS = {
+  scope: 'plan', mealType: 'any',
+  groceryStore: '', kitchenTools: '',
   days: 5, mealsPerDay: 3, includeSnacks: false,
   diet: [], dietOther: '', allergies: '', cuisines: '',
   cookingTime: 'moderate', servings: 1,
   budgetAmount: '', currency: 'EUR', extraNotes: '',
 };
 
-const STEP_COUNT = 9;
+function stepsForScope(scope) {
+  if (scope === 'meal') return ['scope', 'kitchen', 'mealType', 'diet', 'allergies', 'notes'];
+  if (scope === 'snack') return ['scope', 'kitchen', 'diet', 'allergies', 'notes'];
+  return ['scope', 'kitchen', 'days', 'meals', 'diet', 'allergies', 'cuisines', 'cookingTime', 'servings', 'budget', 'notes'];
+}
 
-function Wizard({ onCancel, onComplete }) {
+function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState(DEFAULT_ANSWERS);
+  const [answers, setAnswers] = useState(() => ({
+    ...DEFAULT_ANSWERS,
+    groceryStore: groceryStore || '',
+    kitchenTools: kitchenTools || '',
+  }));
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+
+  const steps = stepsForScope(answers.scope);
+  const stepCount = steps.length;
+  const stepKey = steps[step] || steps[steps.length - 1];
 
   function update(patch) { setAnswers(a => ({ ...a, ...patch })); }
   function toggleDiet(opt) {
     setAnswers(a => ({ ...a, diet: a.diet.includes(opt) ? a.diet.filter(d => d !== opt) : [...a.diet, opt] }));
   }
-  function next() { setStep(s => Math.min(STEP_COUNT - 1, s + 1)); }
+  function setScope(scope) { setAnswers(a => ({ ...a, scope })); setStep(0); }
+  function next() {
+    if (stepKey === 'kitchen') {
+      const gs = answers.groceryStore.trim();
+      const kt = answers.kitchenTools.trim();
+      if (gs !== (groceryStore || '') || kt !== (kitchenTools || '')) {
+        fetch('/api/me', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ grocery_store: gs, kitchen_tools: kt }),
+        }).catch(() => {});
+      }
+    }
+    setStep(s => Math.min(stepCount - 1, s + 1));
+  }
   function back() { setStep(s => Math.max(0, s - 1)); }
 
   async function generate() {
@@ -94,10 +121,17 @@ function Wizard({ onCancel, onComplete }) {
   }
 
   if (generating) {
+    const loadingText = answers.scope === 'meal'
+      ? `Building your ${answers.mealType && answers.mealType !== 'any' ? answers.mealType : 'meal'}…`
+      : answers.scope === 'snack'
+      ? 'Building your snack…'
+      : `Building your ${answers.days}-day plan and shopping list…`;
     return (
       <div className="card" style={{ textAlign: 'center', padding: 48 }}>
-        <p><span className="spinner" />Building your {answers.days}-day plan and shopping list&hellip;</p>
-        <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 8 }}>This can take a minute or two for a full week.</p>
+        <p><span className="spinner" />{loadingText}</p>
+        <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 8 }}>
+          {answers.scope === 'plan' ? 'This can take a minute or two for a full week.' : 'This should just take a few seconds.'}
+        </p>
       </div>
     );
   }
@@ -105,11 +139,43 @@ function Wizard({ onCancel, onComplete }) {
   return (
     <div className="card" style={{ maxWidth: 560 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-        <p className="mono" style={{ fontSize: 11.5, color: 'var(--muted)', margin: 0 }}>Question {step + 1} of {STEP_COUNT}</p>
+        <p className="mono" style={{ fontSize: 11.5, color: 'var(--muted)', margin: 0 }}>Question {step + 1} of {stepCount}</p>
         <button type="button" onClick={onCancel} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12.5, cursor: 'pointer' }}>Cancel</button>
       </div>
 
-      {step === 0 && (
+      {stepKey === 'scope' && (
+        <div>
+          <Bubble>What do you want to plan?</Bubble>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <ChoicePill active={answers.scope === 'plan'} onClick={() => setScope('plan')}>Full meal plan</ChoicePill>
+            <ChoicePill active={answers.scope === 'meal'} onClick={() => setScope('meal')}>Just one meal</ChoicePill>
+            <ChoicePill active={answers.scope === 'snack'} onClick={() => setScope('snack')}>Just a snack</ChoicePill>
+          </div>
+        </div>
+      )}
+
+      {stepKey === 'kitchen' && (
+        <div>
+          <Bubble>What grocery store do you shop at, and what kitchen tools do you have? This keeps ingredients and recipes realistic. Both optional.</Bubble>
+          <div style={{ marginBottom: 12 }}>
+            <input value={answers.groceryStore} onChange={e => update({ groceryStore: e.target.value })} placeholder="e.g. Hofer, Spar, Billa" style={inputStyle} />
+          </div>
+          <textarea value={answers.kitchenTools} onChange={e => update({ kitchenTools: e.target.value })} rows={2} placeholder="e.g. air fryer, no oven, blender, microwave only" style={{ ...inputStyle, resize: 'vertical' }} />
+        </div>
+      )}
+
+      {stepKey === 'mealType' && (
+        <div>
+          <Bubble>Which meal is this for?</Bubble>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {[['breakfast', 'Breakfast'], ['lunch', 'Lunch'], ['dinner', 'Dinner'], ['any', 'Doesn’t matter']].map(([v, l]) => (
+              <ChoicePill key={v} active={answers.mealType === v} onClick={() => update({ mealType: v })}>{l}</ChoicePill>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {stepKey === 'days' && (
         <div>
           <Bubble>How many days should this plan cover?</Bubble>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -118,7 +184,7 @@ function Wizard({ onCancel, onComplete }) {
         </div>
       )}
 
-      {step === 1 && (
+      {stepKey === 'meals' && (
         <div>
           <Bubble>How many meals per day &mdash; not counting snacks?</Bubble>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -131,7 +197,7 @@ function Wizard({ onCancel, onComplete }) {
         </div>
       )}
 
-      {step === 2 && (
+      {stepKey === 'diet' && (
         <div>
           <Bubble>Any dietary style I should plan around?</Bubble>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -141,21 +207,21 @@ function Wizard({ onCancel, onComplete }) {
         </div>
       )}
 
-      {step === 3 && (
+      {stepKey === 'allergies' && (
         <div>
           <Bubble>Any allergies or foods to strictly avoid? These won&rsquo;t appear in anything, in any form.</Bubble>
           <input value={answers.allergies} onChange={e => update({ allergies: e.target.value })} placeholder="Peanuts, shellfish... (leave blank if none)" style={inputStyle} />
         </div>
       )}
 
-      {step === 4 && (
+      {stepKey === 'cuisines' && (
         <div>
           <Bubble>Any cuisines or foods you&rsquo;d like to see more of? Optional &mdash; sensible defaults otherwise.</Bubble>
           <input value={answers.cuisines} onChange={e => update({ cuisines: e.target.value })} placeholder="Italian, Middle Eastern, lots of rice..." style={inputStyle} />
         </div>
       )}
 
-      {step === 5 && (
+      {stepKey === 'cookingTime' && (
         <div>
           <Bubble>How much time do you want to spend cooking, per meal?</Bubble>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -164,7 +230,7 @@ function Wizard({ onCancel, onComplete }) {
         </div>
       )}
 
-      {step === 6 && (
+      {stepKey === 'servings' && (
         <div>
           <Bubble>Who&rsquo;s this for &mdash; just you, or are you cooking for more people each meal?</Bubble>
           <input type="number" min="1" max="12" value={answers.servings} onChange={e => update({ servings: Math.max(1, parseInt(e.target.value, 10) || 1) })} style={{ ...inputStyle, maxWidth: 120 }} />
@@ -172,7 +238,7 @@ function Wizard({ onCancel, onComplete }) {
         </div>
       )}
 
-      {step === 7 && (
+      {stepKey === 'budget' && (
         <div>
           <Bubble>What&rsquo;s your budget for this plan&rsquo;s whole shopping list? Leave the amount blank for no strict limit.</Bubble>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -184,10 +250,20 @@ function Wizard({ onCancel, onComplete }) {
         </div>
       )}
 
-      {step === 8 && (
+      {stepKey === 'notes' && (
         <div>
-          <Bubble>Anything else worth knowing before this gets built? Optional.</Bubble>
-          <textarea value={answers.extraNotes} onChange={e => update({ extraNotes: e.target.value })} rows={3} placeholder="I meal prep on Sundays, I hate mushrooms, whatever's useful..." style={{ ...inputStyle, resize: 'vertical' }} />
+          <Bubble>
+            {answers.scope === 'plan'
+              ? 'Anything else worth knowing before this gets built? Optional.'
+              : 'Any side note for this one? Optional — e.g. just finished a workout and want a high-protein recovery bite, or you’re short on time.'}
+          </Bubble>
+          <textarea
+            value={answers.extraNotes}
+            onChange={e => update({ extraNotes: e.target.value })}
+            rows={3}
+            placeholder={answers.scope === 'plan' ? "I meal prep on Sundays, I hate mushrooms, whatever's useful..." : "Just did a leg workout, want a high-protein post-workout snack..."}
+            style={{ ...inputStyle, resize: 'vertical' }}
+          />
         </div>
       )}
 
@@ -195,10 +271,12 @@ function Wizard({ onCancel, onComplete }) {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
         <button type="button" className="btn secondary" onClick={back} disabled={step === 0}>&larr; Back</button>
-        {step < STEP_COUNT - 1 ? (
+        {step < stepCount - 1 ? (
           <button type="button" className="btn" onClick={next}>Next &rarr;</button>
         ) : (
-          <button type="button" className="btn" onClick={generate}>Build my plan</button>
+          <button type="button" className="btn" onClick={generate}>
+            {answers.scope === 'plan' ? 'Build my plan' : answers.scope === 'meal' ? 'Build my meal' : 'Build my snack'}
+          </button>
         )}
       </div>
     </div>
@@ -472,7 +550,7 @@ function PlanDetail({ planId, onBack, onDeleted }) {
   );
 }
 
-export default function MealPlanner({ targets, initialPlanId }) {
+export default function MealPlanner({ targets, initialPlanId, groceryStore, kitchenTools }) {
   const [view, setView] = useState(initialPlanId ? 'detail' : 'list');
   const [plans, setPlans] = useState([]);
   const [activePlanId, setActivePlanId] = useState(initialPlanId || null);
@@ -495,7 +573,7 @@ export default function MealPlanner({ targets, initialPlanId }) {
   }
 
   if (view === 'wizard') {
-    return <Wizard onCancel={() => setView('list')} onComplete={handleComplete} />;
+    return <Wizard onCancel={() => setView('list')} onComplete={handleComplete} groceryStore={groceryStore} kitchenTools={kitchenTools} />;
   }
   if (view === 'detail' && activePlanId) {
     return <PlanDetail planId={activePlanId} onBack={() => setView('list')} onDeleted={handleDeleted} />;

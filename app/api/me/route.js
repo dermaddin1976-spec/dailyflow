@@ -21,6 +21,12 @@ export async function PATCH(request) {
     await db.prepare('UPDATE users SET name=? WHERE id=?').run((body.name || '').trim() || null, user.id);
   }
 
+  if ('grocery_store' in body || 'kitchen_tools' in body) {
+    const grocery_store = 'grocery_store' in body ? ((body.grocery_store || '').trim() || null) : user.grocery_store;
+    const kitchen_tools = 'kitchen_tools' in body ? ((body.kitchen_tools || '').trim() || null) : user.kitchen_tools;
+    await db.prepare('UPDATE users SET grocery_store=?, kitchen_tools=? WHERE id=?').run(grocery_store, kitchen_tools, user.id);
+  }
+
   if ('age' in body || 'weight_kg' in body || 'height_cm' in body || 'sex' in body || 'activity_level' in body || 'goal' in body || 'target_weight_kg' in body) {
     const age = body.age ? parseInt(body.age, 10) : null;
     const weight_kg = body.weight_kg ? parseFloat(body.weight_kg) : null;

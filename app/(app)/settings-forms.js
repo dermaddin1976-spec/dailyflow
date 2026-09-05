@@ -131,6 +131,58 @@ export function BodyForm({ user }) {
   );
 }
 
+
+export function KitchenForm({ user }) {
+  const router = useRouter();
+  const [groceryStore, setGroceryStore] = useState(user.grocery_store || '');
+  const [kitchenTools, setKitchenTools] = useState(user.kitchen_tools || '');
+  const [msg, setMsg] = useState('');
+  const [ok, setOk] = useState(false);
+
+  async function submit(e) {
+    e.preventDefault();
+    setMsg(''); setOk(false);
+    const res = await fetch('/api/me', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grocery_store: groceryStore, kitchen_tools: kitchenTools }),
+    });
+    const data = await res.json();
+    if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
+    setOk(true);
+    router.refresh();
+  }
+
+  return (
+    <form className="card" onSubmit={submit} style={{ maxWidth: 420, marginTop: 20 }}>
+      <h3>Kitchen</h3>
+      <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
+        Used by the meal planner to suggest realistic ingredients and recipes you can actually make. Both optional.
+      </p>
+      <div className="field">
+        <label>Grocery store you shop at</label>
+        <input value={groceryStore} onChange={e => setGroceryStore(e.target.value)} placeholder="e.g. Hofer, Spar, Billa" />
+      </div>
+      <div className="field">
+        <label>Kitchen tools you have</label>
+        <textarea
+          value={kitchenTools}
+          onChange={e => setKitchenTools(e.target.value)}
+          rows={3}
+          placeholder="e.g. air fryer, no oven, blender, microwave only"
+          style={{
+            width: '100%', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+            background: 'var(--surface-2)', color: 'var(--text)', padding: '10px 12px', fontSize: 14,
+            fontFamily: 'inherit', resize: 'vertical',
+          }}
+        />
+      </div>
+      <button className="btn" style={{ marginTop: 16 }} type="submit">Save</button>
+      {ok && <span style={{ marginLeft: 12, color: 'var(--good)', fontSize: 13 }}>Saved.</span>}
+      {msg && <p className="error-text">{msg}</p>}
+    </form>
+  );
+}
+
 export function PasswordForm() {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');

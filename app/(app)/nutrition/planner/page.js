@@ -29,7 +29,7 @@ export default async function MealPlannerPage({ searchParams }) {
   return (
     <div>
       <p style={{ marginBottom: 20 }}><Link href="/nutrition">&larr; Back to Nutrition</Link></p>
-      <MealPlanner targets={targets} initialPlanId={openId} />
+      <MealPlanner targets={targets} initialPlanId={openId} groceryStore={user.grocery_store || ''} kitchenTools={user.kitchen_tools || ''} />
     </div>
   );
 }

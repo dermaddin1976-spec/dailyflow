@@ -12,7 +12,13 @@ export async function POST(request) {
   }
 
   const { answers } = await request.json();
-  if (!answers || !answers.days || !answers.mealsPerDay) {
+  if (!answers || !answers.scope) {
+    return NextResponse.json({ error: 'Missing answers.' }, { status: 400 });
+  }
+  if (answers.scope === 'plan' && (!answers.days || !answers.mealsPerDay)) {
+    return NextResponse.json({ error: 'Missing answers.' }, { status: 400 });
+  }
+  if (answers.scope === 'meal' && !answers.mealType) {
     return NextResponse.json({ error: 'Missing answers.' }, { status: 400 });
   }
 
@@ -20,8 +26,15 @@ export async function POST(request) {
 
   try {
     const result = await generateMealPlan(answers, targets);
-    const title = `${answers.days}-day plan · ${new Date().toISOString().slice(0, 10)}`;
-    const budget = answers.budgetAmount ? `${answers.budgetAmount} ${answers.currency}` : 'No strict budget';
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const title = answers.scope === 'meal'
+      ? `${answers.mealType && answers.mealType !== 'any' ? answers.mealType[0].toUpperCase() + answers.mealType.slice(1) : 'Meal'} · ${dateStr}`
+      : answers.scope === 'snack'
+      ? `Snack · ${dateStr}`
+      : `${answers.days}-day plan · ${dateStr}`;
+    const budget = answers.scope !== 'plan'
+      ? 'Single item'
+      : answers.budgetAmount ? `${answers.budgetAmount} ${answers.currency}` : 'No strict budget';
 
     const insert = db.prepare(`
       INSERT INTO meal_plans (user_id, title, answers, budget, currency, plan_json, shopping_list_json, total_est_cost, notes)
