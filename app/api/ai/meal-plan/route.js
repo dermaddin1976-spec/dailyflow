@@ -31,6 +31,8 @@ export async function POST(request) {
       ? `${answers.mealType && answers.mealType !== 'any' ? answers.mealType[0].toUpperCase() + answers.mealType.slice(1) : 'Meal'} · ${dateStr}`
       : answers.scope === 'snack'
       ? `Snack · ${dateStr}`
+      : answers.scope === 'grab'
+      ? `Grab & go${answers.grabStore && answers.grabStore.trim() ? ' · ' + answers.grabStore.trim() : ''} · ${dateStr}`
       : `${answers.days}-day plan · ${dateStr}`;
     const budget = answers.scope !== 'plan'
       ? 'Single item'

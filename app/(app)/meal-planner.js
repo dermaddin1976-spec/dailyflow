@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import InfoTip from './info-tip.js';
 import AskPanel from './ask-panel.js';
+import { GROCERY_STORE_OPTIONS, KITCHEN_TOOL_OPTIONS, splitKnownOther, joinKnownOther } from './pantry-options.js';
 
 const CURRENCIES = [
   { value: 'EUR', symbol: '€' },
@@ -16,6 +17,15 @@ const COOKING_TIME_OPTIONS = [
   { value: 'moderate', label: 'Moderate (15–30 min)' },
   { value: 'none', label: 'No limit' },
 ];
+
+const CONTEXT_OPTIONS = ['Post-workout', 'Pre-workout', 'Late night', 'On the go'];
+
+const BUILD_LABELS = {
+  plan: 'Build my plan',
+  meal: 'Build my meal',
+  snack: 'Build my snack',
+  grab: 'Find something to grab',
+};
 
 function currencySymbol(code) {
   return (CURRENCIES.find(c => c.value === code) || {}).symbol || code || '';
@@ -56,8 +66,9 @@ function Bubble({ children }) {
 }
 
 const DEFAULT_ANSWERS = {
-  scope: 'plan', mealType: 'any',
-  groceryStore: '', kitchenTools: '',
+  scope: 'plan', mealType: 'any', context: '', grabStore: '',
+  groceryStores: [], groceryStoreOther: '',
+  kitchenToolsList: [], kitchenToolsOther: '',
   days: 5, mealsPerDay: 3, includeSnacks: false,
   diet: [], dietOther: '', allergies: '', cuisines: '',
   cookingTime: 'moderate', servings: 1,
@@ -65,18 +76,25 @@ const DEFAULT_ANSWERS = {
 };
 
 function stepsForScope(scope) {
-  if (scope === 'meal') return ['scope', 'kitchen', 'mealType', 'diet', 'allergies', 'notes'];
-  if (scope === 'snack') return ['scope', 'kitchen', 'diet', 'allergies', 'notes'];
-  return ['scope', 'kitchen', 'days', 'meals', 'diet', 'allergies', 'cuisines', 'cookingTime', 'servings', 'budget', 'notes'];
+  if (scope === 'meal') return ['scope', 'store', 'kitchen', 'mealType', 'diet', 'allergies', 'notes'];
+  if (scope === 'snack') return ['scope', 'store', 'kitchen', 'diet', 'allergies', 'notes'];
+  if (scope === 'grab') return ['scope', 'grabStore', 'diet', 'allergies', 'notes'];
+  return ['scope', 'store', 'kitchen', 'days', 'meals', 'diet', 'allergies', 'cuisines', 'cookingTime', 'servings', 'budget', 'notes'];
 }
 
 function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState(() => ({
-    ...DEFAULT_ANSWERS,
-    groceryStore: groceryStore || '',
-    kitchenTools: kitchenTools || '',
-  }));
+  const [answers, setAnswers] = useState(() => {
+    const gs = splitKnownOther(groceryStore, GROCERY_STORE_OPTIONS);
+    const kt = splitKnownOther(kitchenTools, KITCHEN_TOOL_OPTIONS);
+    return {
+      ...DEFAULT_ANSWERS,
+      groceryStores: gs.known,
+      groceryStoreOther: gs.other,
+      kitchenToolsList: kt.known,
+      kitchenToolsOther: kt.other,
+    };
+  });
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
@@ -88,15 +106,30 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
   function toggleDiet(opt) {
     setAnswers(a => ({ ...a, diet: a.diet.includes(opt) ? a.diet.filter(d => d !== opt) : [...a.diet, opt] }));
   }
+  function toggleStore(opt) {
+    setAnswers(a => ({ ...a, groceryStores: a.groceryStores.includes(opt) ? a.groceryStores.filter(s => s !== opt) : [...a.groceryStores, opt] }));
+  }
+  function toggleTool(opt) {
+    setAnswers(a => ({ ...a, kitchenToolsList: a.kitchenToolsList.includes(opt) ? a.kitchenToolsList.filter(t => t !== opt) : [...a.kitchenToolsList, opt] }));
+  }
   function setScope(scope) { setAnswers(a => ({ ...a, scope })); setStep(0); }
+  function setContext(c) { setAnswers(a => ({ ...a, context: a.context === c ? '' : c })); }
   function next() {
-    if (stepKey === 'kitchen') {
-      const gs = answers.groceryStore.trim();
-      const kt = answers.kitchenTools.trim();
-      if (gs !== (groceryStore || '') || kt !== (kitchenTools || '')) {
+    if (stepKey === 'store') {
+      const joined = joinKnownOther(answers.groceryStores, answers.groceryStoreOther);
+      if (joined !== (groceryStore || '')) {
         fetch('/api/me', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ grocery_store: gs, kitchen_tools: kt }),
+          body: JSON.stringify({ grocery_store: joined }),
+        }).catch(() => {});
+      }
+    }
+    if (stepKey === 'kitchen') {
+      const joined = joinKnownOther(answers.kitchenToolsList, answers.kitchenToolsOther);
+      if (joined !== (kitchenTools || '')) {
+        fetch('/api/me', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kitchen_tools: joined }),
         }).catch(() => {});
       }
     }
@@ -107,9 +140,15 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
   async function generate() {
     setGenerating(true); setError('');
     try {
+      const payload = {
+        ...answers,
+        groceryStore: joinKnownOther(answers.groceryStores, answers.groceryStoreOther),
+        kitchenTools: joinKnownOther(answers.kitchenToolsList, answers.kitchenToolsOther),
+        budgetAmount: answers.budgetAmount ? Number(answers.budgetAmount) : null,
+      };
       const res = await fetch('/api/ai/meal-plan', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: { ...answers, budgetAmount: answers.budgetAmount ? Number(answers.budgetAmount) : null } }),
+        body: JSON.stringify({ answers: payload }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Something went wrong.'); setGenerating(false); return; }
@@ -125,6 +164,8 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
       ? `Building your ${answers.mealType && answers.mealType !== 'any' ? answers.mealType : 'meal'}…`
       : answers.scope === 'snack'
       ? 'Building your snack…'
+      : answers.scope === 'grab'
+      ? 'Finding something quick to grab…'
       : `Building your ${answers.days}-day plan and shopping list…`;
     return (
       <div className="card" style={{ textAlign: 'center', padding: 48 }}>
@@ -150,17 +191,49 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
             <ChoicePill active={answers.scope === 'plan'} onClick={() => setScope('plan')}>Full meal plan</ChoicePill>
             <ChoicePill active={answers.scope === 'meal'} onClick={() => setScope('meal')}>Just one meal</ChoicePill>
             <ChoicePill active={answers.scope === 'snack'} onClick={() => setScope('snack')}>Just a snack</ChoicePill>
+            <ChoicePill active={answers.scope === 'grab'} onClick={() => setScope('grab')}>Grab something quick (no cooking)</ChoicePill>
           </div>
+        </div>
+      )}
+
+      {stepKey === 'store' && (
+        <div>
+          <Bubble>Which stores do you shop at? Tap all that apply &mdash; this keeps ingredients realistic. Optional.</Bubble>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+            {GROCERY_STORE_OPTIONS.map(opt => (
+              <ChoicePill key={opt} active={answers.groceryStores.includes(opt)} onClick={() => toggleStore(opt)}>{opt}</ChoicePill>
+            ))}
+          </div>
+          <input value={answers.groceryStoreOther} onChange={e => update({ groceryStoreOther: e.target.value })} placeholder="Other store not listed? (optional)" style={inputStyle} />
         </div>
       )}
 
       {stepKey === 'kitchen' && (
         <div>
-          <Bubble>What grocery store do you shop at, and what kitchen tools do you have? This keeps ingredients and recipes realistic. Both optional.</Bubble>
-          <div style={{ marginBottom: 12 }}>
-            <input value={answers.groceryStore} onChange={e => update({ groceryStore: e.target.value })} placeholder="e.g. Hofer, Spar, Billa" style={inputStyle} />
+          <Bubble>What kitchen tools do you have? Tap all that apply &mdash; recipes will stick to what you can actually use. Optional.</Bubble>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+            {KITCHEN_TOOL_OPTIONS.map(opt => (
+              <ChoicePill key={opt} active={answers.kitchenToolsList.includes(opt)} onClick={() => toggleTool(opt)}>{opt}</ChoicePill>
+            ))}
           </div>
-          <textarea value={answers.kitchenTools} onChange={e => update({ kitchenTools: e.target.value })} rows={2} placeholder="e.g. air fryer, no oven, blender, microwave only" style={{ ...inputStyle, resize: 'vertical' }} />
+          <input value={answers.kitchenToolsOther} onChange={e => update({ kitchenToolsOther: e.target.value })} placeholder="Other tool not listed? (optional)" style={inputStyle} />
+        </div>
+      )}
+
+      {stepKey === 'grabStore' && (
+        <div>
+          <Bubble>Which store are you at or heading to right now?</Bubble>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+            {GROCERY_STORE_OPTIONS.map(opt => (
+              <ChoicePill key={opt} active={answers.grabStore === opt} onClick={() => update({ grabStore: opt })}>{opt}</ChoicePill>
+            ))}
+          </div>
+          <input
+            value={answers.grabStore && !GROCERY_STORE_OPTIONS.includes(answers.grabStore) ? answers.grabStore : ''}
+            onChange={e => update({ grabStore: e.target.value })}
+            placeholder="Somewhere else? Type it here"
+            style={inputStyle}
+          />
         </div>
       )}
 
@@ -257,11 +330,18 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
               ? 'Anything else worth knowing before this gets built? Optional.'
               : 'Any side note for this one? Optional — e.g. just finished a workout and want a high-protein recovery bite, or you’re short on time.'}
           </Bubble>
+          {answers.scope !== 'plan' && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+              {CONTEXT_OPTIONS.map(c => (
+                <ChoicePill key={c} active={answers.context === c} onClick={() => setContext(c)}>{c}</ChoicePill>
+              ))}
+            </div>
+          )}
           <textarea
             value={answers.extraNotes}
             onChange={e => update({ extraNotes: e.target.value })}
             rows={3}
-            placeholder={answers.scope === 'plan' ? "I meal prep on Sundays, I hate mushrooms, whatever's useful..." : "Just did a leg workout, want a high-protein post-workout snack..."}
+            placeholder={answers.scope === 'plan' ? "I meal prep on Sundays, I hate mushrooms, whatever's useful..." : "Anything else worth adding..."}
             style={{ ...inputStyle, resize: 'vertical' }}
           />
         </div>
@@ -274,9 +354,7 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
         {step < stepCount - 1 ? (
           <button type="button" className="btn" onClick={next}>Next &rarr;</button>
         ) : (
-          <button type="button" className="btn" onClick={generate}>
-            {answers.scope === 'plan' ? 'Build my plan' : answers.scope === 'meal' ? 'Build my meal' : 'Build my snack'}
-          </button>
+          <button type="button" className="btn" onClick={generate}>{BUILD_LABELS[answers.scope] || 'Build'}</button>
         )}
       </div>
     </div>
