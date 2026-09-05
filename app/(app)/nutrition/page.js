@@ -52,12 +52,9 @@ export default async function NutritionPage() {
           rest of your calories. Today's totals below come from the meals you log.
         </InfoTip>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
-        <p style={{ color: 'var(--text-2)', margin: 0 }}>
-          Today&rsquo;s intake against your daily targets{targets ? ` — set to ${goalLabel(targets.goal)}` : ''}.
-        </p>
-        {hasBodyProfile(user) && <Link href="/nutrition/planner" className="btn secondary">Meal planner</Link>}
-      </div>
+      <p style={{ color: 'var(--text-2)', margin: '0 0 24px' }}>
+        Today&rsquo;s intake against your daily targets{targets ? ` — set to ${goalLabel(targets.goal)}` : ''}.
+      </p>
 
       {!hasBodyProfile(user) ? (
         <div className="card" style={{ marginBottom: 28, textAlign: 'center', padding: '36px 28px' }}>
