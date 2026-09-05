@@ -1,5 +1,5 @@
 import { requireUser } from '../../../lib/auth.js';
-import { ProfileForm, PasswordForm, BodyForm, KitchenForm, StravaConnectionCard, AppleHealthCard, AdminPasswordResetsCard, AdminUsersCard } from '../settings-forms.js';
+import { ProfileForm, PasswordForm, BodyForm, StravaConnectionCard, AppleHealthCard, AdminPasswordResetsCard, AdminUsersCard } from '../settings-forms.js';
 import WeightCard from '../weight-card.js';
 import { isAdminEmail } from '../../../lib/config.js';
 
@@ -12,7 +12,6 @@ export default async function SettingsPage({ searchParams }) {
       <h1 style={{ fontSize: 24, marginBottom: 20 }}>Settings</h1>
       <ProfileForm user={user} />
       <BodyForm user={user} />
-      <KitchenForm user={user} />
       <WeightCard initialWeightKg={user.weight_kg} />
       <PasswordForm />
       <StravaConnectionCard connected={user.strava_connected} status={stravaStatus} />

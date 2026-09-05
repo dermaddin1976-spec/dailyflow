@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ActivityIcon from './activity-icon.js';
-import { GROCERY_STORE_OPTIONS, KITCHEN_TOOL_OPTIONS, splitKnownOther, joinKnownOther } from './pantry-options.js';
 
 export function ProfileForm({ user }) {
   const router = useRouter();
@@ -132,100 +131,6 @@ export function BodyForm({ user }) {
   );
 }
 
-
-function KitchenOptionPill({ active, onClick, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        padding: '8px 14px', borderRadius: 'var(--radius-pill)',
-        border: `1px solid ${active ? 'var(--accent)' : 'var(--border-strong)'}`,
-        background: active ? 'var(--accent-soft)' : 'var(--surface)',
-        color: active ? 'var(--accent)' : 'var(--text)',
-        fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-export function KitchenForm({ user }) {
-  const router = useRouter();
-  const gsInit = splitKnownOther(user.grocery_store, GROCERY_STORE_OPTIONS);
-  const ktInit = splitKnownOther(user.kitchen_tools, KITCHEN_TOOL_OPTIONS);
-  const [stores, setStores] = useState(gsInit.known);
-  const [storeOther, setStoreOther] = useState(gsInit.other);
-  const [tools, setTools] = useState(ktInit.known);
-  const [toolOther, setToolOther] = useState(ktInit.other);
-  const [msg, setMsg] = useState('');
-  const [ok, setOk] = useState(false);
-
-  function toggleStore(opt) { setStores(s => s.includes(opt) ? s.filter(x => x !== opt) : [...s, opt]); }
-  function toggleTool(opt) { setTools(s => s.includes(opt) ? s.filter(x => x !== opt) : [...s, opt]); }
-
-  const otherInputStyle = {
-    width: '100%', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
-    background: 'var(--surface-2)', color: 'var(--text)', padding: '10px 12px', fontSize: 14,
-    fontFamily: 'inherit',
-  };
-
-  async function submit(e) {
-    e.preventDefault();
-    setMsg(''); setOk(false);
-    const res = await fetch('/api/me', {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        grocery_store: joinKnownOther(stores, storeOther),
-        kitchen_tools: joinKnownOther(tools, toolOther),
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
-    setOk(true);
-    router.refresh();
-  }
-
-  return (
-    <form className="card" onSubmit={submit} style={{ maxWidth: 480, marginTop: 20 }}>
-      <h3>Kitchen</h3>
-      <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4, marginBottom: 16 }}>
-        Used by the meal planner to suggest realistic ingredients and recipes you can actually make. Both optional.
-      </p>
-
-      <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 8 }}>Grocery stores you shop at</label>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-        {GROCERY_STORE_OPTIONS.map(opt => (
-          <KitchenOptionPill key={opt} active={stores.includes(opt)} onClick={() => toggleStore(opt)}>{opt}</KitchenOptionPill>
-        ))}
-      </div>
-      <input
-        value={storeOther}
-        onChange={e => setStoreOther(e.target.value)}
-        placeholder="Other store not listed? (optional)"
-        style={{ ...otherInputStyle, marginBottom: 20 }}
-      />
-
-      <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 8 }}>Kitchen tools you have</label>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-        {KITCHEN_TOOL_OPTIONS.map(opt => (
-          <KitchenOptionPill key={opt} active={tools.includes(opt)} onClick={() => toggleTool(opt)}>{opt}</KitchenOptionPill>
-        ))}
-      </div>
-      <input
-        value={toolOther}
-        onChange={e => setToolOther(e.target.value)}
-        placeholder="Other tool not listed? (optional)"
-        style={otherInputStyle}
-      />
-
-      <button className="btn" style={{ marginTop: 16 }} type="submit">Save</button>
-      {ok && <span style={{ marginLeft: 12, color: 'var(--good)', fontSize: 13 }}>Saved.</span>}
-      {msg && <p className="error-text">{msg}</p>}
-    </form>
-  );
-}
 
 export function PasswordForm() {
   const [current, setCurrent] = useState('');

@@ -1,13 +1,13 @@
-export const GROCERY_STORE_OPTIONS = [
-  'Billa', 'Billa Plus', 'Spar', 'Interspar', 'Eurospar', 'Hofer',
-  'Lidl', 'Penny', 'MPreis', 'Adeg', 'Merkur', 'Unimarkt',
-];
+// Curated to a short list of well-known Austrian grocery chains that carry
+// decent quality fresh/protein staples for someone training seriously —
+// no near-duplicate banners (Billa Plus, Eurospar, Interspar) and no
+// bottom-shelf discounters (Penny).
+export const GROCERY_STORE_OPTIONS = ['Billa', 'Spar', 'Hofer', 'Lidl', 'MPreis', 'Merkur'];
 
-export const KITCHEN_TOOL_OPTIONS = [
-  'Oven', 'Stovetop', 'Microwave', 'Air fryer', 'Blender', 'Food processor',
-  'Slow cooker', 'Instant Pot / pressure cooker', 'Rice cooker', 'Toaster',
-  'Grill / BBQ', 'Stand mixer', 'Kettle',
-];
+// Curated to the handful of appliances that actually change what a recipe
+// can look like. Niche extras (rice cooker, stand mixer, sous vide, ...)
+// are left to the free-text "other" field instead of cluttering the picker.
+export const KITCHEN_TOOL_OPTIONS = ['Oven', 'Stovetop', 'Microwave', 'Air fryer', 'Blender', 'Toaster', 'Kettle'];
 
 export function toList(str) {
   return (str || '').split(',').map(s => s.trim()).filter(Boolean);

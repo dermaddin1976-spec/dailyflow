@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import InfoTip from './info-tip.js';
 import AskPanel from './ask-panel.js';
 import { GROCERY_STORE_OPTIONS, KITCHEN_TOOL_OPTIONS, splitKnownOther, joinKnownOther } from './pantry-options.js';
+import KitchenPicker from './kitchen-picker.js';
 
 const CURRENCIES = [
   { value: 'EUR', symbol: '€' },
@@ -210,13 +211,9 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
 
       {stepKey === 'kitchen' && (
         <div>
-          <Bubble>What kitchen tools do you have? Tap all that apply &mdash; recipes will stick to what you can actually use. Optional.</Bubble>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-            {KITCHEN_TOOL_OPTIONS.map(opt => (
-              <ChoicePill key={opt} active={answers.kitchenToolsList.includes(opt)} onClick={() => toggleTool(opt)}>{opt}</ChoicePill>
-            ))}
-          </div>
-          <input value={answers.kitchenToolsOther} onChange={e => update({ kitchenToolsOther: e.target.value })} placeholder="Other tool not listed? (optional)" style={inputStyle} />
+          <Bubble>What kitchen tools do you have? Tap an appliance in the picture &mdash; recipes will stick to what you can actually use. Optional.</Bubble>
+          <KitchenPicker selected={answers.kitchenToolsList} onToggle={toggleTool} />
+          <input value={answers.kitchenToolsOther} onChange={e => update({ kitchenToolsOther: e.target.value })} placeholder="Something else not pictured? (optional)" style={{ ...inputStyle, marginTop: 14 }} />
         </div>
       )}
 
