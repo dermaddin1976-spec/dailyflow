@@ -86,21 +86,63 @@ export default function StudyLogger() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [filledFlash, setFilledFlash] = useState('');
   const timerIntervalRef = useRef(null);
+  // Counting "+1 every second" via setInterval drifts badly the moment this tab
+  // isn't the active one — browsers throttle (or fully suspend) background
+  // interval timers, so switching away to read slides makes the count fall
+  // behind real elapsed time. Instead we track the real start timestamp and
+  // always compute elapsed time from actual clock time, the same way a phone
+  // stopwatch does — the interval below only exists to re-render the display,
+  // not to do the counting.
+  const runStartRef = useRef(null); // Date.now() when the current running segment began
+  const baseSecondsRef = useRef(0); // whole seconds banked from segments before this one (pauses)
+
+  const computeSeconds = useCallback(() => {
+    if (runStartRef.current == null) return baseSecondsRef.current;
+    return baseSecondsRef.current + Math.floor((Date.now() - runStartRef.current) / 1000);
+  }, []);
+
+  function startTimer() {
+    runStartRef.current = Date.now();
+    setTimerRunning(true);
+    setTimerSeconds(computeSeconds());
+  }
+
+  function pauseTimer() {
+    baseSecondsRef.current = computeSeconds();
+    runStartRef.current = null;
+    setTimerSeconds(baseSecondsRef.current);
+    setTimerRunning(false);
+  }
 
   useEffect(() => {
     if (timerRunning) {
-      timerIntervalRef.current = setInterval(() => setTimerSeconds(s => s + 1), 1000);
+      timerIntervalRef.current = setInterval(() => setTimerSeconds(computeSeconds()), 1000);
     } else if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
     }
     return () => { if (timerIntervalRef.current) clearInterval(timerIntervalRef.current); };
-  }, [timerRunning]);
+  }, [timerRunning, computeSeconds]);
+
+  // Catch up immediately when the tab becomes visible again, rather than
+  // waiting up to a second for the next interval tick.
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === 'visible' && timerRunning) {
+        setTimerSeconds(computeSeconds());
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [timerRunning, computeSeconds]);
 
   function stopAndFill() {
+    const finalSeconds = computeSeconds();
     setTimerRunning(false);
-    const mins = Math.max(1, Math.round(timerSeconds / 60));
+    const mins = Math.max(1, Math.round(finalSeconds / 60));
     setSubject(timerSubject || subject);
     setMinutes(String(mins));
+    runStartRef.current = null;
+    baseSecondsRef.current = 0;
     setTimerSeconds(0);
     setTimerSubject('');
     setFilledFlash(`Filled in ${mins} minute${mins === 1 ? '' : 's'} below — review and save.`);
@@ -174,11 +216,11 @@ export default function StudyLogger() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {!timerRunning ? (
-            <button type="button" className="btn wide" onClick={() => setTimerRunning(true)}>
+            <button type="button" className="btn wide" onClick={startTimer}>
               {timerSeconds > 0 ? 'Resume' : 'Start'}
             </button>
           ) : (
-            <button type="button" className="btn secondary wide" onClick={() => setTimerRunning(false)}>Pause</button>
+            <button type="button" className="btn secondary wide" onClick={pauseTimer}>Pause</button>
           )}
           <button type="button" className="btn secondary wide" onClick={stopAndFill} disabled={timerSeconds === 0}>
             Stop &amp; fill in below
