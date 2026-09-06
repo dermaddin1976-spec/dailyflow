@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import InfoTip from './info-tip.js';
 import ActivityIcon from './activity-icon.js';
+import LogHistory from './log-history.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -285,19 +286,32 @@ export default function SessionLogger() {
             <input
               type="text" value={historyQuery} onChange={e => setHistoryQuery(e.target.value)}
               placeholder={`Search ${items.length} sessions…`}
-              style={{ ...miniFieldStyle, marginBottom: 10 }}
+              style={miniFieldStyle}
             />
           )}
           {(() => {
             const q = historyQuery.trim().toLowerCase();
-            const filtered = q
-              ? items.filter(i => (i.title || '').toLowerCase().includes(q) || (i.type || '').toLowerCase().includes(q) || (i.note || '').toLowerCase().includes(q))
-              : items;
+            if (!q) {
+              // No active search: group by day (today expanded, older days
+              // collapsed) instead of one long flat scrolling list.
+              return (
+                <LogHistory
+                  items={items}
+                  renderItem={i => <WorkoutRow key={i.id} item={i} onSave={saveWorkout} onDelete={deleteWorkout} />}
+                  summarize={dayItems => {
+                    const mins = dayItems.reduce((s, i) => s + (i.minutes || 0), 0);
+                    return `${dayItems.length} · ${mins}m`;
+                  }}
+                />
+              );
+            }
+            // Searching spans every day at once, so show a flat filtered list.
+            const filtered = items.filter(i => (i.title || '').toLowerCase().includes(q) || (i.type || '').toLowerCase().includes(q) || (i.note || '').toLowerCase().includes(q));
             if (filtered.length === 0) {
-              return <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>No sessions match &ldquo;{historyQuery}&rdquo;.</p>;
+              return <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 10 }}>No sessions match &ldquo;{historyQuery}&rdquo;.</p>;
             }
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 420, overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 420, overflowY: 'auto', marginTop: 10 }}>
                 {filtered.map(i => (
                   <WorkoutRow key={i.id} item={i} onSave={saveWorkout} onDelete={deleteWorkout} />
                 ))}

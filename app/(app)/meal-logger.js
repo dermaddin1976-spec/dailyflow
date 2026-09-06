@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import InfoTip from './info-tip.js';
+import LogHistory from './log-history.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -382,15 +383,14 @@ export default function MealLogger() {
       </div>
       <button className="btn wide" style={{ marginTop: 18 }} type="submit">Save meal</button>
 
-      {items.length === 0 ? (
-        <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 16 }}>Nothing logged yet.</p>
-      ) : (
-        <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {items.slice(0, 8).map(i => (
-            <MealRow key={i.id} item={i} onSave={saveMeal} onDelete={deleteMeal} />
-          ))}
-        </div>
-      )}
+      <LogHistory
+        items={items}
+        renderItem={i => <MealRow key={i.id} item={i} onSave={saveMeal} onDelete={deleteMeal} />}
+        summarize={dayItems => {
+          const cals = dayItems.reduce((s, i) => s + (i.calories || 0), 0);
+          return `${dayItems.length} · ${cals} cal`;
+        }}
+      />
     </form>
   );
 }

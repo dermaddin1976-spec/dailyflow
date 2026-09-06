@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import InfoTip from './info-tip.js';
+import LogHistory from './log-history.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -259,15 +260,14 @@ export default function StudyLogger() {
       </div>
       <button className="btn wide" style={{ marginTop: 18 }} type="submit">Save session</button>
 
-      {items.length === 0 ? (
-        <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 16 }}>Nothing logged yet.</p>
-      ) : (
-        <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {items.slice(0, 8).map(i => (
-            <StudyRow key={i.id} item={i} onSave={saveSession} onDelete={deleteSession} />
-          ))}
-        </div>
-      )}
+      <LogHistory
+        items={items}
+        renderItem={i => <StudyRow key={i.id} item={i} onSave={saveSession} onDelete={deleteSession} />}
+        summarize={dayItems => {
+          const mins = dayItems.reduce((s, i) => s + (i.minutes || 0), 0);
+          return `${dayItems.length} · ${mins}m`;
+        }}
+      />
       </form>
     </>
   );
