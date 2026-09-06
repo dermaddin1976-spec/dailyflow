@@ -24,10 +24,32 @@ export default async function TrendsPage({ searchParams }) {
   const start = dates[0];
   const end = dates[dates.length - 1];
 
-  const sleepRows = await db.prepare('SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date>=? GROUP BY date').all(user.id, start);
-  const studyRows = await db.prepare('SELECT date, SUM(minutes) as minutes FROM study_logs WHERE user_id=? AND date>=? GROUP BY date').all(user.id, start);
-  const workoutRows = await db.prepare('SELECT date, SUM(minutes) as minutes FROM workout_logs WHERE user_id=? AND date>=? GROUP BY date').all(user.id, start);
-  const mealRows = await db.prepare('SELECT date, SUM(calories) as calories FROM meal_logs WHERE user_id=? AND date>=? GROUP BY date').all(user.id, start);
+  const DEBT_WINDOW_DAYS = 14;
+  const debtDates = lastNDates(DEBT_WINDOW_DAYS);
+  const sleepTarget = recommendedSleepHours(user.age);
+
+  // Correlation: average study focus on days that followed a night at/above the sleep target,
+  // versus days that followed a shorter night. Needs sleep data starting one day before the range.
+  const corrSleepStart = dateOffset(start, -1);
+
+  // None of these reads depend on each other's results, so run them all at
+  // once instead of one after another.
+  const [sleepRows, studyRows, workoutRows, mealRows, allWorkoutDateRows, debtRows, corrSleepRows, corrStudyRows] = await Promise.all([
+    db.prepare('SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date>=? GROUP BY date').all(user.id, start),
+    db.prepare('SELECT date, SUM(minutes) as minutes FROM study_logs WHERE user_id=? AND date>=? GROUP BY date').all(user.id, start),
+    db.prepare('SELECT date, SUM(minutes) as minutes FROM workout_logs WHERE user_id=? AND date>=? GROUP BY date').all(user.id, start),
+    db.prepare('SELECT date, SUM(calories) as calories FROM meal_logs WHERE user_id=? AND date>=? GROUP BY date').all(user.id, start),
+    db.prepare('SELECT DISTINCT date FROM workout_logs WHERE user_id=?').all(user.id),
+    db.prepare(
+      'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
+    ).all(user.id, debtDates[0], debtDates[debtDates.length - 1]),
+    db.prepare(
+      'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
+    ).all(user.id, corrSleepStart, end),
+    db.prepare(
+      "SELECT date, AVG(focus) as focus FROM study_logs WHERE user_id=? AND date BETWEEN ? AND ? AND focus IS NOT NULL GROUP BY date"
+    ).all(user.id, start, end),
+  ]);
 
   const toMap = (rows, key) => Object.fromEntries(rows.map(r => [r.date, r[key] || 0]));
   const sleepMap = toMap(sleepRows, 'hours');
@@ -37,26 +59,10 @@ export default async function TrendsPage({ searchParams }) {
 
   const hasAny = sleepRows.length || studyRows.length || workoutRows.length || mealRows.length;
 
-  const allWorkoutDates = (await db.prepare('SELECT DISTINCT date FROM workout_logs WHERE user_id=?').all(user.id)).map(r => r.date);
+  const allWorkoutDates = allWorkoutDateRows.map(r => r.date);
   const streak = computeStreak(allWorkoutDates);
-
-  const DEBT_WINDOW_DAYS = 14;
-  const debtDates = lastNDates(DEBT_WINDOW_DAYS);
-  const debtRows = await db.prepare(
-    'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
-  ).all(user.id, debtDates[0], debtDates[debtDates.length - 1]);
-  const sleepTarget = recommendedSleepHours(user.age);
   const sleepDebt = computeSleepDebt(debtRows.map(r => r.hours), sleepTarget, DEBT_WINDOW_DAYS);
 
-  // Correlation: average study focus on days that followed a night at/above the sleep target,
-  // versus days that followed a shorter night. Needs sleep data starting one day before the range.
-  const corrSleepStart = dateOffset(start, -1);
-  const corrSleepRows = await db.prepare(
-    'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
-  ).all(user.id, corrSleepStart, end);
-  const corrStudyRows = await db.prepare(
-    "SELECT date, AVG(focus) as focus FROM study_logs WHERE user_id=? AND date BETWEEN ? AND ? AND focus IS NOT NULL GROUP BY date"
-  ).all(user.id, start, end);
   const sleepByDate = Object.fromEntries(corrSleepRows.map(r => [r.date, r.hours]));
 
   const goodFocus = [];

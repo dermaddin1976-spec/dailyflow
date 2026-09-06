@@ -11,20 +11,23 @@ export default async function SleepPage() {
   const dates = lastNDates(7);
   const weekStart = dates[0], weekEnd = dates[dates.length - 1];
 
-  const dailyRows = await db.prepare(
-    'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
-  ).all(user.id, weekStart, weekEnd);
-  const dailyMap = Object.fromEntries(dailyRows.map(r => [r.date, Math.round((r.hours || 0) * 10) / 10]));
-
-  const totals = await db.prepare(
-    'SELECT COUNT(*) as nights, AVG(hours) as avgHours, AVG(quality) as avgQuality FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ?'
-  ).get(user.id, weekStart, weekEnd);
-
   const DEBT_WINDOW_DAYS = 14;
   const debtDates = lastNDates(DEBT_WINDOW_DAYS);
-  const debtRows = await db.prepare(
-    'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
-  ).all(user.id, debtDates[0], debtDates[debtDates.length - 1]);
+
+  // None of these reads depend on each other's results, so run them all at
+  // once instead of one after another.
+  const [dailyRows, totals, debtRows] = await Promise.all([
+    db.prepare(
+      'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
+    ).all(user.id, weekStart, weekEnd),
+    db.prepare(
+      'SELECT COUNT(*) as nights, AVG(hours) as avgHours, AVG(quality) as avgQuality FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ?'
+    ).get(user.id, weekStart, weekEnd),
+    db.prepare(
+      'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
+    ).all(user.id, debtDates[0], debtDates[debtDates.length - 1]),
+  ]);
+  const dailyMap = Object.fromEntries(dailyRows.map(r => [r.date, Math.round((r.hours || 0) * 10) / 10]));
   const target = recommendedSleepHours(user.age);
   const debt = computeSleepDebt(debtRows.map(r => r.hours), target, DEBT_WINDOW_DAYS);
   const debtStatus = debtLabel(debt.debtHours);

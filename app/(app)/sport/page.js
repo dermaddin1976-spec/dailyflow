@@ -12,43 +12,42 @@ export default async function SportPage() {
   const dates = lastNDates(7);
   const weekStart = dates[0], weekEnd = dates[dates.length - 1];
 
-  const dailyRows = await db.prepare(
-    'SELECT date, SUM(minutes) as minutes FROM workout_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
-  ).all(user.id, weekStart, weekEnd);
+  // None of these reads depend on each other's results, so run them all at
+  // once instead of one after another.
+  const [dailyRows, totals, byType, allDateRows, personalRecords, longestRun, fastestRun] = await Promise.all([
+    db.prepare(
+      'SELECT date, SUM(minutes) as minutes FROM workout_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
+    ).all(user.id, weekStart, weekEnd),
+    db.prepare(
+      'SELECT COALESCE(SUM(minutes),0) as minutes, COUNT(*) as sessions, AVG(intensity) as avgIntensity FROM workout_logs WHERE user_id=? AND date BETWEEN ? AND ?'
+    ).get(user.id, weekStart, weekEnd),
+    db.prepare(
+      'SELECT type, COALESCE(SUM(minutes),0) as minutes FROM workout_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY type ORDER BY minutes DESC'
+    ).all(user.id, weekStart, weekEnd),
+    db.prepare('SELECT DISTINCT date FROM workout_logs WHERE user_id=? ORDER BY date DESC').all(user.id),
+    db.prepare(`
+      SELECT * FROM (
+        SELECT DISTINCT ON (w.type) w.type, w.minutes, w.intensity, w.date
+        FROM workout_logs w
+        WHERE w.user_id=?
+        ORDER BY w.type, w.minutes DESC
+      ) t
+      ORDER BY t.minutes DESC
+    `).all(user.id),
+    db.prepare(`
+      SELECT date, distance_km, minutes FROM workout_logs
+      WHERE user_id=? AND distance_km IS NOT NULL AND type LIKE '%Run%'
+      ORDER BY distance_km DESC LIMIT 1
+    `).get(user.id),
+    db.prepare(`
+      SELECT date, distance_km, minutes, (minutes * 1.0 / distance_km) as paceMinPerKm FROM workout_logs
+      WHERE user_id=? AND distance_km IS NOT NULL AND distance_km > 0 AND minutes IS NOT NULL AND minutes > 0 AND type LIKE '%Run%'
+      ORDER BY paceMinPerKm ASC LIMIT 1
+    `).get(user.id),
+  ]);
   const dailyMap = Object.fromEntries(dailyRows.map(r => [r.date, r.minutes || 0]));
-
-  const totals = await db.prepare(
-    'SELECT COALESCE(SUM(minutes),0) as minutes, COUNT(*) as sessions, AVG(intensity) as avgIntensity FROM workout_logs WHERE user_id=? AND date BETWEEN ? AND ?'
-  ).get(user.id, weekStart, weekEnd);
-
-  const byType = await db.prepare(
-    'SELECT type, COALESCE(SUM(minutes),0) as minutes FROM workout_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY type ORDER BY minutes DESC'
-  ).all(user.id, weekStart, weekEnd);
-
-  const allDates = (await db.prepare('SELECT DISTINCT date FROM workout_logs WHERE user_id=? ORDER BY date DESC').all(user.id)).map(r => r.date);
+  const allDates = allDateRows.map(r => r.date);
   const streak = computeStreak(allDates);
-
-  const personalRecords = await db.prepare(`
-    SELECT * FROM (
-      SELECT DISTINCT ON (w.type) w.type, w.minutes, w.intensity, w.date
-      FROM workout_logs w
-      WHERE w.user_id=?
-      ORDER BY w.type, w.minutes DESC
-    ) t
-    ORDER BY t.minutes DESC
-  `).all(user.id);
-
-  const longestRun = await db.prepare(`
-    SELECT date, distance_km, minutes FROM workout_logs
-    WHERE user_id=? AND distance_km IS NOT NULL AND type LIKE '%Run%'
-    ORDER BY distance_km DESC LIMIT 1
-  `).get(user.id);
-
-  const fastestRun = await db.prepare(`
-    SELECT date, distance_km, minutes, (minutes * 1.0 / distance_km) as paceMinPerKm FROM workout_logs
-    WHERE user_id=? AND distance_km IS NOT NULL AND distance_km > 0 AND minutes IS NOT NULL AND minutes > 0 AND type LIKE '%Run%'
-    ORDER BY paceMinPerKm ASC LIMIT 1
-  `).get(user.id);
 
   function formatPace(minPerKm) {
     const mins = Math.floor(minPerKm);
