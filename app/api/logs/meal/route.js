@@ -5,10 +5,10 @@ import { getCurrentUser } from '../../../../lib/auth.js';
 export async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
-  const { date, description, calories, protein, carbs, fat, note } = await request.json();
+  const { date, description, calories, protein, carbs, fat, note, photo_data_url } = await request.json();
   if (!date || !description) return NextResponse.json({ error: 'A description is required.' }, { status: 400 });
-  await db.prepare('INSERT INTO meal_logs (user_id, date, description, calories, protein, carbs, fat, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(user.id, date, description, calories || null, protein || null, carbs || null, fat || null, note || null);
+  await db.prepare('INSERT INTO meal_logs (user_id, date, description, calories, protein, carbs, fat, note, photo_data_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(user.id, date, description, calories || null, protein || null, carbs || null, fat || null, note || null, photo_data_url || null);
   return NextResponse.json({ ok: true });
 }
 

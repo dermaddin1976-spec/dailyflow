@@ -35,6 +35,25 @@ function fileToBase64(file) {
   });
 }
 
+// Downsize a photo before it's stored with the log entry — a full-resolution
+// phone photo on every meal would bloat the database fast, and this only
+// needs to be big enough to recognize what you ate at a glance.
+function resizeForStorage(base64, mimeType, maxWidth = 480, quality = 0.6) {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src = `data:${mimeType};base64,${base64}`;
+  });
+}
+
 const miniFieldStyle = {
   border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
   background: 'var(--surface)', color: 'var(--text)', padding: '6px 8px',
@@ -86,7 +105,17 @@ function MealRow({ item, onSave, onDelete }) {
 
   return (
     <div className="meal-row">
-      <span style={{ color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</span>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', minWidth: 0 }}>
+        {item.photo_data_url && (
+          <a href={item.photo_data_url} target="_blank" rel="noreferrer" style={{ flexShrink: 0, lineHeight: 0 }}>
+            <img
+              src={item.photo_data_url} alt=""
+              style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-strong)', display: 'block' }}
+            />
+          </a>
+        )}
+        <span style={{ color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</span>
+      </span>
       <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         <span className="mono" style={{ color: 'var(--muted)', fontSize: 11.5 }}>
           {[item.calories && `${item.calories} cal`, item.protein && `${item.protein}p`, item.carbs && `${item.carbs}c`, item.fat && `${item.fat}f`].filter(Boolean).join(' · ') || '—'}
@@ -107,6 +136,7 @@ export default function MealLogger() {
   const [fat, setFat] = useState('');
   const [estimating, setEstimating] = useState(false);
   const [estimateMsg, setEstimateMsg] = useState('');
+  const [photoDataUrl, setPhotoDataUrl] = useState('');
   const [msg, setMsg] = useState('');
   const [savedFlash, setSavedFlash] = useState('');
   const [items, setItems] = useState([]);
@@ -153,11 +183,12 @@ export default function MealLogger() {
         protein: parseInt(protein, 10) || null,
         carbs: parseInt(carbs, 10) || null,
         fat: parseInt(fat, 10) || null,
+        photo_data_url: photoDataUrl || null,
       }),
     });
     const data = await res.json();
     if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
-    setDescription(''); setCalories(''); setProtein(''); setCarbs(''); setFat(''); setEstimateMsg('');
+    setDescription(''); setCalories(''); setProtein(''); setCarbs(''); setFat(''); setEstimateMsg(''); setPhotoDataUrl('');
     setSavedFlash('Saved.');
     setTimeout(() => setSavedFlash(''), 1500);
     refresh();
@@ -166,6 +197,9 @@ export default function MealLogger() {
 
   async function applyEstimate(base64, mimeType) {
     setEstimating(true); setEstimateMsg('');
+    // Keep a smaller copy of the photo attached to this entry regardless of
+    // whether the AI estimate below succeeds — the user still took the photo.
+    resizeForStorage(base64, mimeType).then(setPhotoDataUrl).catch(() => {});
     try {
       const res = await fetch('/api/ai/estimate-meal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -381,6 +415,14 @@ export default function MealLogger() {
           <input type="number" min="0" value={fat} onChange={e => setFat(e.target.value)} />
         </div>
       </div>
+      {photoDataUrl && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+          <img src={photoDataUrl} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)' }} />
+          <button type="button" onClick={() => setPhotoDataUrl('')} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+            Remove photo
+          </button>
+        </div>
+      )}
       <button className="btn wide" style={{ marginTop: 18 }} type="submit">Save meal</button>
 
       <LogHistory
