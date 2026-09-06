@@ -473,6 +473,7 @@ function PlanDetail({ planId, onBack, onDeleted }) {
   const [regenerating, setRegenerating] = useState(false);
   const [checked, setChecked] = useState({});
   const [msg, setMsg] = useState('');
+  const [savedKeys, setSavedKeys] = useState({});
 
   const load = useCallback(() => {
     setLoading(true);
@@ -481,6 +482,29 @@ function PlanDetail({ planId, onBack, onDeleted }) {
   useEffect(() => { load(); }, [load]);
 
   function toggleChecked(key) { setChecked(c => ({ ...c, [key]: !c[key] })); }
+
+  // A single-item result (one meal, one snack, one grab-and-go) has a shopping
+  // list that IS that dish's ingredients, so it's worth carrying over into the
+  // saved recipe. A full multi-day plan's shopping list is consolidated across
+  // the whole week, so it can't be attributed to any one meal.
+  async function saveRecipe(meal, key) {
+    const isSingleItem = plan.answers && plan.answers.scope !== 'plan';
+    await fetch('/api/recipes', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mealType: meal.meal,
+        name: meal.name,
+        description: meal.description,
+        calories: meal.calories,
+        protein: meal.protein,
+        carbs: meal.carbs,
+        fat: meal.fat,
+        currency,
+        ingredients: isSingleItem ? (plan.shoppingList || []) : [],
+      }),
+    }).catch(() => {});
+    setSavedKeys(k => ({ ...k, [key]: true }));
+  }
 
   async function regenerate() {
     setRegenerating(true); setMsg('');
@@ -561,20 +585,40 @@ function PlanDetail({ planId, onBack, onDeleted }) {
           <details key={di} className="card" style={{ padding: 0 }} open={di === 0}>
             <summary style={{ padding: '16px 20px', cursor: 'pointer', fontWeight: 600 }}>{d.day}</summary>
             <div style={{ padding: '0 20px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {d.meals.map((m, mi) => (
-                <div key={mi} style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                    <div>
-                      <span className="mono" style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{m.meal}</span>
-                      <div style={{ fontWeight: 600, marginTop: 2 }}>{m.name}</div>
-                      <p style={{ color: 'var(--text-2)', fontSize: 13, marginTop: 4 }}>{m.description}</p>
-                    </div>
-                    <div className="mono" style={{ fontSize: 11.5, color: 'var(--muted)', textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                      {m.calories} cal<br />{m.protein}p {m.carbs}c {m.fat}f
+              {d.meals.map((m, mi) => {
+                const key = `${di}-${mi}`;
+                const isSaved = !!savedKeys[key];
+                return (
+                  <div key={mi} style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                      <div>
+                        <span className="mono" style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{m.meal}</span>
+                        <div style={{ fontWeight: 600, marginTop: 2 }}>{m.name}</div>
+                        <p style={{ color: 'var(--text-2)', fontSize: 13, marginTop: 4 }}>{m.description}</p>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                        <div className="mono" style={{ fontSize: 11.5, color: 'var(--muted)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          {m.calories} cal<br />{m.protein}p {m.carbs}c {m.fat}f
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => !isSaved && saveRecipe(m, key)}
+                          disabled={isSaved}
+                          style={{
+                            background: 'none', border: 'none', padding: 0, fontSize: 11, fontFamily: 'inherit',
+                            color: isSaved ? 'var(--good)' : 'var(--muted)',
+                            cursor: isSaved ? 'default' : 'pointer',
+                            textDecoration: isSaved ? 'none' : 'underline',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {isSaved ? 'Saved to recipe book' : 'Save to recipe book'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </details>
         ))}
@@ -625,6 +669,93 @@ function PlanDetail({ planId, onBack, onDeleted }) {
   );
 }
 
+function RecipeCard({ recipe, onDelete }) {
+  const [open, setOpen] = useState(false);
+  const symbol = currencySymbol(recipe.currency || 'EUR');
+  const ingredients = recipe.ingredients || [];
+  return (
+    <div className="card" style={{ border: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div>
+          {recipe.meal_type && (
+            <span className="mono" style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{recipe.meal_type}</span>
+          )}
+          <h3 style={{ fontSize: 15, marginTop: 2 }}>{recipe.name}</h3>
+        </div>
+        <button
+          onClick={() => onDelete(recipe.id)}
+          aria-label="Delete recipe"
+          style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 15, padding: '0 2px', flexShrink: 0 }}
+        >
+          &times;
+        </button>
+      </div>
+      {recipe.description && <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 6 }}>{recipe.description}</p>}
+      <p className="mono" style={{ color: 'var(--muted)', fontSize: 11.5, marginTop: 8 }}>
+        {recipe.calories} cal &middot; {recipe.protein}p {recipe.carbs}c {recipe.fat}f
+      </p>
+      {ingredients.length > 0 && (
+        <>
+          <button type="button" className="btn secondary wide" style={{ marginTop: 14 }} onClick={() => setOpen(o => !o)}>
+            {open ? 'Hide ingredients' : `Show ingredients (${ingredients.length})`}
+          </button>
+          {open && (
+            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {ingredients.map((item, ii) => (
+                <div key={ii} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
+                  <span>{item.item} <span style={{ color: 'var(--muted)' }}>&middot; {item.quantity}</span></span>
+                  <span className="mono" style={{ color: 'var(--muted)' }}>{symbol}{Number(item.estCost || 0).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function RecipeBook({ onBack }) {
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    fetch('/api/recipes').then(r => r.json()).then(d => { setRecipes(d.recipes || []); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
+  useEffect(() => { refresh(); }, [refresh]);
+
+  async function deleteRecipe(id) {
+    if (!window.confirm('Delete this saved recipe?')) return;
+    await fetch(`/api/recipes/${id}`, { method: 'DELETE' });
+    refresh();
+  }
+
+  return (
+    <div>
+      <button className="btn secondary" onClick={onBack} style={{ marginBottom: 20 }}>&larr; Back to plans</button>
+      <h2 style={{ fontSize: 19, marginBottom: 4 }}>Recipe book</h2>
+      <p style={{ color: 'var(--text-2)', fontSize: 13.5, marginBottom: 18 }}>
+        Meals and snacks you&rsquo;ve saved from past plans &mdash; no need to regenerate a favorite from scratch.
+      </p>
+      {loading ? (
+        <p style={{ color: 'var(--muted)', fontSize: 13 }}>Loading&hellip;</p>
+      ) : recipes.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '40px 28px', border: '1px dashed var(--border-strong)', boxShadow: 'none' }}>
+          <h3 style={{ marginBottom: 8 }}>Nothing saved yet</h3>
+          <p style={{ color: 'var(--text-2)', fontSize: 13.5, maxWidth: 380, margin: '0 auto' }}>
+            Open a plan and hit &ldquo;Save to recipe book&rdquo; on a meal you want to keep.
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 18 }}>
+          {recipes.map(r => <RecipeCard key={r.id} recipe={r} onDelete={deleteRecipe} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MealPlanner({ targets, initialPlanId, groceryStore, kitchenTools }) {
   const [view, setView] = useState(initialPlanId ? 'detail' : 'list');
   const [plans, setPlans] = useState([]);
@@ -650,6 +781,9 @@ export default function MealPlanner({ targets, initialPlanId, groceryStore, kitc
   if (view === 'wizard') {
     return <Wizard onCancel={() => setView('list')} onComplete={handleComplete} groceryStore={groceryStore} kitchenTools={kitchenTools} />;
   }
+  if (view === 'recipes') {
+    return <RecipeBook onBack={() => setView('list')} />;
+  }
   if (view === 'detail' && activePlanId) {
     return <PlanDetail planId={activePlanId} onBack={() => setView('list')} onDeleted={handleDeleted} />;
   }
@@ -671,7 +805,10 @@ export default function MealPlanner({ targets, initialPlanId, groceryStore, kitc
             Built around your targets: {targets.calories} cal &middot; {targets.protein}p {targets.carbs}c {targets.fat}f per day
           </p>
         </div>
-        <button className="btn" onClick={() => setView('wizard')}>New meal plan</button>
+        <div className="btn-row">
+          <button className="btn secondary" onClick={() => setView('recipes')}>Recipe book</button>
+          <button className="btn" onClick={() => setView('wizard')}>New meal plan</button>
+        </div>
       </div>
 
       {loadingList ? (
