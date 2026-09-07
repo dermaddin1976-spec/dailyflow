@@ -153,6 +153,9 @@ export default function MealLogger() {
   const scanVideoRef = useRef(null);
   const zxingReaderRef = useRef(null);
 
+  const [describeOpen, setDescribeOpen] = useState(false);
+  const [describeText, setDescribeText] = useState('');
+
   const refresh = useCallback(() => {
     fetch('/api/logs/meal').then(r => r.json()).then(d => setItems(d.logs || [])).catch(() => {});
   }, []);
@@ -242,6 +245,31 @@ export default function MealLogger() {
       setEstimateMsg(data.note || 'Found via barcode — review before saving.');
     } catch (err) {
       setEstimateMsg('Something went wrong looking up that barcode.');
+    } finally {
+      setEstimating(false);
+    }
+  }
+
+  async function applyTextEstimate() {
+    if (!describeText.trim()) { setEstimateMsg('Describe what you ate first.'); return; }
+    setEstimating(true); setEstimateMsg('');
+    try {
+      const res = await fetch('/api/ai/estimate-meal-from-text', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: describeText }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setEstimateMsg(data.error || 'Estimate failed.'); return; }
+      setDescription(data.description || '');
+      setCalories(data.calories ? String(data.calories) : '');
+      setProtein(data.protein ? String(data.protein) : '');
+      setCarbs(data.carbs ? String(data.carbs) : '');
+      setFat(data.fat ? String(data.fat) : '');
+      setEstimateMsg(`DailyAI estimate (${data.confidence || 'medium'} confidence) — review before saving.`);
+      setDescribeOpen(false);
+      setDescribeText('');
+    } catch (err) {
+      setEstimateMsg('Something went wrong estimating that.');
     } finally {
       setEstimating(false);
     }
@@ -340,8 +368,9 @@ export default function MealLogger() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <h3 style={{ margin: 0 }}>Log a meal</h3>
         <InfoTip>
-          DailyAI reads your photo and takes a guess at what's in it, along with calories, protein, carbs and fat
-          &mdash; it's a starting point, not a lab measurement, so check the numbers (and confidence note) before saving.
+          DailyAI reads your photo, or your written description if you forgot to log something at the time, and
+          takes a guess at calories, protein, carbs and fat &mdash; it's a starting point, not a lab measurement, so
+          check the numbers (and confidence note) before saving.
         </InfoTip>
         {savedFlash && <span style={{ color: 'var(--good)', fontSize: 13, fontWeight: 600 }}>{savedFlash}</span>}
       </div>
@@ -375,6 +404,26 @@ export default function MealLogger() {
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8, textAlign: 'center' }}>Point the camera at the barcode.</p>
           <button type="button" className="btn secondary wide" style={{ marginTop: 2 }} onClick={closeScanner}>Cancel</button>
         </div>
+      ) : describeOpen ? (
+        <div style={{ marginTop: 14 }}>
+          <textarea
+            value={describeText}
+            onChange={e => setDescribeText(e.target.value)}
+            placeholder="e.g. Two slices of homemade pizza with pepperoni, and a side salad"
+            rows={3}
+            style={{
+              width: '100%', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+              background: 'var(--surface)', color: 'var(--text)', padding: '8px 10px', fontSize: 13,
+              fontFamily: 'inherit', resize: 'vertical',
+            }}
+          />
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            <button type="button" className="btn secondary wide" onClick={() => { setDescribeOpen(false); setDescribeText(''); setEstimateMsg(''); }}>Cancel</button>
+            <button type="button" className="btn wide" onClick={applyTextEstimate} disabled={estimating}>
+              {estimating ? (<><span className="spinner" />Estimating…</>) : 'Estimate'}
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="action-grid">
           <button type="button" className="btn secondary wide" onClick={openCamera} disabled={estimating}>
@@ -386,6 +435,9 @@ export default function MealLogger() {
           </label>
           <button type="button" className="btn secondary wide" onClick={openScanner} disabled={estimating || scannerLoading}>
             {scannerLoading ? (<><span className="spinner" />Loading…</>) : 'Scan a barcode'}
+          </button>
+          <button type="button" className="btn secondary wide" onClick={() => setDescribeOpen(true)} disabled={estimating}>
+            Describe it
           </button>
         </div>
       )}
