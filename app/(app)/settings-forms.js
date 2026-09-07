@@ -383,6 +383,106 @@ export function StravaImportCard({ connected }) {
   );
 }
 
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+export function NotificationsCard() {
+  const [status, setStatus] = useState('checking'); // checking | unsupported | denied | off | on
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    async function check() {
+      if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        setStatus('unsupported');
+        return;
+      }
+      if (Notification.permission === 'denied') { setStatus('denied'); return; }
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        setStatus(sub ? 'on' : 'off');
+      } catch (err) {
+        setStatus('off');
+      }
+    }
+    check();
+  }, []);
+
+  async function enable() {
+    setBusy(true); setMsg('');
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') { setStatus('denied'); setBusy(false); return; }
+      const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!key) { setMsg('Notifications are not set up on the server yet.'); setBusy(false); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key),
+      });
+      const res = await fetch('/api/notifications/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      if (!res.ok) { setMsg('Could not save that subscription — try again.'); setBusy(false); return; }
+      setStatus('on');
+    } catch (err) {
+      setMsg('Could not enable notifications on this device.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function disable() {
+    setBusy(true); setMsg('');
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch('/api/notifications/subscribe', {
+          method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setStatus('off');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card" style={{ maxWidth: 420, marginTop: 20 }}>
+      <h3>Notifications</h3>
+      <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
+        Once a day in the evening, DailyFlow checks what you haven&rsquo;t logged yet &mdash; meals, sleep, study,
+        training &mdash; and sends one reminder naming whatever&rsquo;s missing. Nothing if you&rsquo;re already
+        caught up.
+      </p>
+      {status === 'checking' && <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 10 }}>Checking&hellip;</p>}
+      {status === 'unsupported' && <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 10 }}>Not supported on this browser/device.</p>}
+      {status === 'denied' && (
+        <p style={{ fontSize: 12.5, color: 'var(--warning)', marginTop: 10 }}>
+          Blocked in your browser&rsquo;s site settings &mdash; allow notifications for this site to turn it on.
+        </p>
+      )}
+      {(status === 'on' || status === 'off') && (
+        <button type="button" className="btn secondary" style={{ marginTop: 12 }} onClick={status === 'on' ? disable : enable} disabled={busy}>
+          {busy ? 'Working…' : status === 'on' ? 'Turn off notifications' : 'Turn on notifications'}
+        </button>
+      )}
+      {msg && <p className="error-text" style={{ marginTop: 8 }}>{msg}</p>}
+    </div>
+  );
+}
+
 export function AppleHealthCard({ connected }) {
   const router = useRouter();
   const [revealedToken, setRevealedToken] = useState('');
