@@ -3,7 +3,7 @@ import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import InfoTip from '../info-tip.js';
 import { BarChart, lastNDates } from '../bar-chart.js';
-import { recommendedSleepHours, computeSleepDebt } from '../../../lib/sleep.js';
+import { recommendedSleepHours, computeSleepDebt, formatHM } from '../../../lib/sleep.js';
 import { computeStreak } from '../../../lib/streak.js';
 
 const RANGE_OPTIONS = [7, 14, 30];
@@ -113,7 +113,7 @@ export default async function TrendsPage({ searchParams }) {
         </Link>
         <Link href="/sleep" className="card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
           <div style={{ fontSize: 11.5, color: 'var(--muted)', letterSpacing: '.03em' }}>SLEEP DEBT (14D)</div>
-          <div className="mono" style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{sleepDebt.debtHours}h</div>
+          <div className="mono" style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{formatHM(sleepDebt.debtHours)}</div>
         </Link>
       </div>
 
@@ -121,7 +121,7 @@ export default async function TrendsPage({ searchParams }) {
         <p style={{ color: 'var(--muted)' }}>Nothing logged in the last {rangeDays} days yet &mdash; log something on Nutrition, Sport, Sleep or Study to see it here.</p>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 24, marginBottom: 28 }}>
-        <BarChart title="Sleep" unit="h" dates={dates} values={dates.map(d => Math.round((sleepMap[d] || 0) * 10) / 10)} />
+        <BarChart title="Sleep" unit="h" dates={dates} values={dates.map(d => Math.round((sleepMap[d] || 0) * 10) / 10)} formatValue={formatHM} />
         <BarChart title="Study minutes" unit="m" dates={dates} values={dates.map(d => studyMap[d] || 0)} />
         <BarChart title="Training minutes" unit="m" dates={dates} values={dates.map(d => workoutMap[d] || 0)} />
         <BarChart title="Calories logged" unit=" cal" dates={dates} values={dates.map(d => mealMap[d] || 0)} />
@@ -131,7 +131,7 @@ export default async function TrendsPage({ searchParams }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <h3 style={{ margin: 0 }}>Sleep &amp; focus</h3>
           <InfoTip>
-            Compares your average study focus rating on days that followed a night at or above your {sleepTarget}h
+            Compares your average study focus rating on days that followed a night at or above your {formatHM(sleepTarget)}
             target, against days that followed a shorter night, using sleep and study sessions logged in this range.
             It's a simple before/after comparison of your own data, not a controlled study &mdash; take it as a hint
             worth watching, not a proven cause and effect, especially with only a few days on either side.

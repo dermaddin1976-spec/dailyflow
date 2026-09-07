@@ -13,7 +13,7 @@ export function weekdayLabel(dateStr) {
   return ['S', 'M', 'T', 'W', 'T', 'F', 'S'][d.getDay()];
 }
 
-export function BarChart({ title, unit, dates, values }) {
+export function BarChart({ title, unit, dates, values, formatValue }) {
   const max = Math.max(1, ...values);
   const barW = 30;
   const gap = 14;
@@ -31,7 +31,7 @@ export function BarChart({ title, unit, dates, values }) {
           const y = chartH - h;
           return (
             <g key={date}>
-              <title>{`${date}: ${v}${unit}`}</title>
+              <title>{`${date}: ${formatValue ? formatValue(v) : `${v}${unit}`}`}</title>
               <rect x={x} y={y} width={barW} height={h} rx={4} fill="var(--accent)" opacity={v === 0 ? 0.15 : 1} />
               {v === 0 && <rect x={x} y={chartH - 2} width={barW} height={2} rx={1} fill="var(--border-strong)" />}
               <text x={x + barW / 2} y={chartH + 18} textAnchor="middle" fontSize="10" fontFamily="var(--font-mono)" fill="var(--muted)">

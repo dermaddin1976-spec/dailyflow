@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import InfoTip from './info-tip.js';
 import LogHistory from './log-history.js';
+import { formatHM } from '../../lib/sleep.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -58,7 +59,7 @@ function SleepRow({ item, onSave, onDelete }) {
         <span style={{ color: 'var(--text-2)' }}>{item.date}</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <span className="mono" style={{ color: 'var(--muted)', fontSize: 11.5 }}>
-            {item.hours}h{item.quality ? ` · quality ${item.quality}` : ''}
+            {formatHM(item.hours)}{item.quality ? ` · quality ${item.quality}` : ''}
           </span>
           <button type="button" onClick={() => setEditing(true)} aria-label="Edit night" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0 }}>&#9998;</button>
           <button type="button" onClick={() => onDelete(item.id)} aria-label="Delete night" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 15, cursor: 'pointer', padding: 0 }}>&times;</button>
@@ -190,7 +191,7 @@ export default function SleepLogger() {
         renderItem={i => <SleepRow key={i.id} item={i} onSave={saveSleep} onDelete={deleteSleep} />}
         summarize={dayItems => {
           const hrs = dayItems.reduce((s, i) => s + (Number(i.hours) || 0), 0);
-          return `${dayItems.length} · ${hrs.toFixed(1)}h`;
+          return `${dayItems.length} · ${formatHM(hrs)}`;
         }}
       />
     </form>

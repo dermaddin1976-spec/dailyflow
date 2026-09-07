@@ -4,7 +4,7 @@ import InfoTip from '../info-tip.js';
 import { BarChart, lastNDates } from '../bar-chart.js';
 import SleepLogger from '../sleep-logger.js';
 import Link from 'next/link';
-import { recommendedSleepHours, computeSleepDebt, debtLabel } from '../../../lib/sleep.js';
+import { recommendedSleepHours, computeSleepDebt, debtLabel, formatHM } from '../../../lib/sleep.js';
 
 export default async function SleepPage() {
   const user = await requireUser();
@@ -45,7 +45,7 @@ export default async function SleepPage() {
       <p style={{ color: 'var(--text-2)', marginBottom: 24 }}>This week&rsquo;s sleep.</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 24, marginBottom: 28 }}>
-        <BarChart title="Hours per night" unit="h" dates={dates} values={dates.map(d => dailyMap[d] || 0)} />
+        <BarChart title="Hours per night" unit="h" dates={dates} values={dates.map(d => dailyMap[d] || 0)} formatValue={formatHM} />
 
         <div className="card">
           <h3 style={{ marginBottom: 14 }}>This week</h3>
@@ -53,7 +53,7 @@ export default async function SleepPage() {
             <div>
               <div style={{ fontSize: 11.5, color: 'var(--muted)', letterSpacing: '.03em' }}>AVG HOURS</div>
               <div className="mono" style={{ fontSize: 20, fontWeight: 700, marginTop: 2 }}>
-                {totals.avgHours ? totals.avgHours.toFixed(1) : '—'}
+                {totals.avgHours ? formatHM(totals.avgHours) : '—'}
               </div>
             </div>
             <div>
@@ -76,7 +76,7 @@ export default async function SleepPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <h3 style={{ margin: 0 }}>Sleep debt</h3>
               <InfoTip>
-                Your target is {target}h a night, based on{user.age ? ` your age (${user.age})` : ' a default adult target'} &mdash;
+                Your target is {formatHM(target)} a night, based on{user.age ? ` your age (${user.age})` : ' a default adult target'} &mdash;
                 add your age in Settings for a number tailored to you. Debt adds up the gap between that target and
                 what you actually logged over the last {DEBT_WINDOW_DAYS} days, counting only nights you've logged.
                 A run of good nights pays it back down, but it never goes below zero &mdash; you can't bank extra sleep
@@ -85,12 +85,12 @@ export default async function SleepPage() {
             </div>
             <p style={{ color: 'var(--text-2)', fontSize: 12.5 }}>
               Last {DEBT_WINDOW_DAYS} days &middot; {debt.nightsLogged} night{debt.nightsLogged === 1 ? '' : 's'} logged
-              {debt.avgHours != null ? ` \u00b7 avg ${debt.avgHours}h` : ''} &middot; target {target}h
+              {debt.avgHours != null ? ` \u00b7 avg ${formatHM(debt.avgHours)}` : ''} &middot; target {formatHM(target)}
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div className="mono" style={{ fontSize: 32, fontWeight: 700, color: debtStatus.color }}>
-              {debt.debtHours}h
+              {formatHM(debt.debtHours)}
             </div>
             <div style={{ fontSize: 12.5, color: debtStatus.color, marginTop: 2 }}>{debtStatus.text}</div>
           </div>

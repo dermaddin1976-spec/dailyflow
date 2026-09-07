@@ -3,7 +3,7 @@ import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import DeadlinesCard from '../deadlines-card.js';
 import InfoTip from '../info-tip.js';
-import { recommendedSleepHours, computeSleepDebt } from '../../../lib/sleep.js';
+import { recommendedSleepHours, computeSleepDebt, formatHM } from '../../../lib/sleep.js';
 import { computeStreak } from '../../../lib/streak.js';
 import { lastNDates } from '../bar-chart.js';
 
@@ -31,7 +31,7 @@ async function computeReadiness(userId, userAge) {
   const sleepTarget = recommendedSleepHours(userAge);
   if (lastSleep) {
     const score = Math.max(0, Math.min(100, Math.round((lastSleep.hours / sleepTarget) * 100)));
-    components.push({ name: 'Sleep', score, reason: `${lastSleep.hours}h logged` });
+    components.push({ name: 'Sleep', score, reason: `${formatHM(lastSleep.hours)} logged` });
   } else {
     components.push({ name: 'Sleep', score: null, reason: 'Not logged yet' });
   }
@@ -133,12 +133,12 @@ export default async function TodayPage() {
 
   const summaryParts = [];
   if (streak > 0) summaryParts.push(`${streak}-day training streak`);
-  if (sleepDebt.nightsLogged > 0) summaryParts.push(sleepDebt.debtHours > 0 ? `sleep debt at ${sleepDebt.debtHours}h` : 'no sleep debt');
+  if (sleepDebt.nightsLogged > 0) summaryParts.push(sleepDebt.debtHours > 0 ? `sleep debt at ${formatHM(sleepDebt.debtHours)}` : 'no sleep debt');
   if (meals.count > 0) summaryParts.push(`${meals.count} meal${meals.count === 1 ? '' : 's'} logged today`);
   const summaryLine = summaryParts.join(' · ');
 
   const tiles = [
-    { label: 'SLEEP', value: sleep ? `${sleep.hours}h` : '—' },
+    { label: 'SLEEP', value: sleep ? formatHM(sleep.hours) : '—' },
     { label: 'STUDY', value: `${study.total}m` },
     { label: 'TRAINING', value: `${workout.total}m` },
     { label: 'STREAK', value: `${streak}d` },
