@@ -62,6 +62,7 @@ const miniFieldStyle = {
 
 function MealRow({ item, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [description, setDescription] = useState(item.description);
   const [calories, setCalories] = useState(item.calories ?? '');
   const [protein, setProtein] = useState(item.protein ?? '');
@@ -107,12 +108,36 @@ function MealRow({ item, onSave, onDelete }) {
     <div className="meal-row">
       <span style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', minWidth: 0 }}>
         {item.photo_data_url && (
-          <a href={item.photo_data_url} target="_blank" rel="noreferrer" style={{ flexShrink: 0, lineHeight: 0 }}>
-            <img
-              src={item.photo_data_url} alt=""
-              style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-strong)', display: 'block' }}
-            />
-          </a>
+          <>
+            <button
+              type="button"
+              onClick={() => setPhotoOpen(true)}
+              aria-label="View photo"
+              style={{ flexShrink: 0, lineHeight: 0, background: 'none', border: 'none', padding: 0, cursor: 'zoom-in' }}
+            >
+              <img
+                src={item.photo_data_url} alt=""
+                style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-strong)', display: 'block' }}
+              />
+            </button>
+            {photoOpen && (
+              // A full data: URL is too long/blocked for a browser tab navigation
+              // (Chrome refuses top-level navigation to data: URLs), so the
+              // full-size photo opens in an in-page overlay instead.
+              <div
+                onClick={() => setPhotoOpen(false)}
+                style={{
+                  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, cursor: 'zoom-out',
+                }}
+              >
+                <img
+                  src={item.photo_data_url} alt=""
+                  style={{ maxWidth: '92vw', maxHeight: '92vh', borderRadius: 10, boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
+                />
+              </div>
+            )}
+          </>
         )}
         <span style={{ color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</span>
       </span>
