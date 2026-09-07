@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import FlameMark from '../brand-mark.js';
+import IntroSplash from './intro-splash.js';
 
 const ICONS = {
   today: <><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></>,
@@ -66,6 +67,7 @@ export default function AppChrome({ user, children }) {
 
   return (
     <div className="app-shell">
+      <IntroSplash name={user.name || user.email.split('@')[0]} />
       <div className="app-topbar">
         <button className="menu-toggle" aria-label="Open menu" onClick={() => setMenuOpen(true)}>
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
