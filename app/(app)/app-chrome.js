@@ -7,6 +7,7 @@ import IntroSplash from './intro-splash.js';
 
 const ICONS = {
   today: <><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></>,
+  calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></>,
   log: <><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></>,
   nutrition: <><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></>,
   mealplanner: <><path d="M7 2v6a2 2 0 0 0 4 0V2"/><path d="M9 8v14"/><path d="M17 2c-2 0-3 2-3 5s1 5 3 5"/><path d="M17 12v10"/></>,
@@ -27,6 +28,7 @@ function NavIcon({ name }) {
 
 const LINKS = [
   { href: '/today', label: 'Today', icon: 'today' },
+  { href: '/calendar', label: 'Calendar', icon: 'calendar' },
   { href: '/log', label: 'Log', icon: 'log' },
   { href: '/nutrition', label: 'Nutrition', icon: 'nutrition' },
   { href: '/nutrition/planner', label: 'Meal Planner', icon: 'mealplanner' },

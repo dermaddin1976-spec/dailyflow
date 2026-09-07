@@ -219,9 +219,53 @@ export function StravaConnectionCard({ connected, status }) {
         </div>
       </div>
 
-      <p style={{ color: 'var(--muted)', fontSize: 11.5, marginTop: 16 }}>
-        Google Calendar and other integrations come later.
-      </p>
+    </div>
+  );
+}
+
+export function GoogleCalendarCard({ connected, email, status }) {
+  const router = useRouter();
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  async function disconnect() {
+    if (!window.confirm('Disconnect Google Calendar? Events already synced stay on your calendar.')) return;
+    setDisconnecting(true);
+    await fetch('/api/integrations/google-calendar/disconnect', { method: 'POST' });
+    setDisconnecting(false);
+    router.refresh();
+  }
+
+  return (
+    <div className="card" style={{ maxWidth: 420, marginTop: 20 }}>
+      {status === 'not_configured' && (
+        <p className="error-text" style={{ marginTop: 8 }}>
+          Google Calendar isn&rsquo;t set up yet — add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env.local first (see below).
+        </p>
+      )}
+      {status === 'error' && (
+        <p className="error-text" style={{ marginTop: 8 }}>Couldn&rsquo;t connect to Google Calendar. Try again.</p>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+        <div>
+          <p style={{ fontWeight: 600, fontSize: 14 }}>Google Calendar</p>
+          <p style={{ color: 'var(--text-2)', fontSize: 12.5 }}>
+            {connected ? `Connected${email ? ` as ${email}` : ''} — head to the Calendar page and hit Sync.` : 'Pull your Google events into the Calendar tab.'}
+          </p>
+        </div>
+        {connected ? (
+          <span className="mono" style={{ fontSize: 11, color: 'var(--good)', flexShrink: 0 }}>Connected</span>
+        ) : null}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        {connected ? (
+          <button className="btn secondary" onClick={disconnect} disabled={disconnecting}>
+            {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+          </button>
+        ) : (
+          <a className="btn" href="/api/integrations/google-calendar/connect">Connect Google Calendar</a>
+        )}
+      </div>
     </div>
   );
 }
