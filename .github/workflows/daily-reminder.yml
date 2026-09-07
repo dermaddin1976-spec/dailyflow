@@ -1,0 +1,15 @@
+name: DailyFlow daily reminder
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger daily check-in
+        run: |
+          curl -sf -X GET "https://dailyflow-gamma.vercel.app/api/notifications/daily-check" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
