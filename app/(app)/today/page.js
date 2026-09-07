@@ -5,6 +5,7 @@ import DeadlinesCard from '../deadlines-card.js';
 import InfoTip from '../info-tip.js';
 import { recommendedSleepHours, computeSleepDebt, formatHM } from '../../../lib/sleep.js';
 import { computeStreak } from '../../../lib/streak.js';
+import { getReadinessTip } from '../../../lib/readinessTip.js';
 import { lastNDates } from '../bar-chart.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -113,6 +114,11 @@ export default async function TodayPage() {
     db.prepare('SELECT * FROM meal_plans WHERE user_id=? ORDER BY id DESC LIMIT 1').get(user.id),
   ]);
 
+  // Depends on the readiness result above, so this runs after the batch
+  // rather than inside it — cached after the first view each day, so this
+  // only costs real latency once daily per user.
+  const readinessTip = await getReadinessTip(user.id, date, readiness);
+
   const allWorkoutDates = allWorkoutDateRows.map(r => r.date);
   const streak = computeStreak(allWorkoutDates);
   const sleepDebt = computeSleepDebt(debtRows.map(r => r.hours), recommendedSleepHours(user.age), DEBT_WINDOW_DAYS);
@@ -193,6 +199,14 @@ export default async function TodayPage() {
             ))}
           </div>
         </div>
+        {readinessTip && (
+          <p style={{
+            marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)',
+            fontSize: 13, color: 'var(--text-2)', fontStyle: 'italic', lineHeight: 1.5,
+          }}>
+            &ldquo;{readinessTip}&rdquo;
+          </p>
+        )}
       </div>
 
       <div className="tile-grid">
