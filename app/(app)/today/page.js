@@ -6,6 +6,8 @@ import InfoTip from '../info-tip.js';
 import { recommendedSleepHours, computeSleepDebt, formatHM } from '../../../lib/sleep.js';
 import { computeStreak } from '../../../lib/streak.js';
 import { getReadinessTip } from '../../../lib/readinessTip.js';
+import { buildCoachContext } from '../../../lib/coachContext.js';
+import TodayCoach from '../today-coach.js';
 import { lastNDates } from '../bar-chart.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -122,6 +124,11 @@ export default async function TodayPage() {
   // only costs real latency once daily per user.
   const readinessTip = await getReadinessTip(user.id, date, readiness);
 
+  // Depends on readiness too — builds the week-wide picture the overall
+  // Today-tab coach reasons over (sleep, training, meals, study all
+  // together), separate from the single-tab tip above.
+  const coachContext = await buildCoachContext(user.id, user, readiness);
+
   const allWorkoutDates = allWorkoutDateRows.map(r => r.date);
   const streak = computeStreak(allWorkoutDates);
   const sleepDebt = computeSleepDebt(debtRows.map(r => r.hours), recommendedSleepHours(user.age), DEBT_WINDOW_DAYS);
@@ -211,6 +218,8 @@ export default async function TodayPage() {
           </p>
         )}
       </div>
+
+      <TodayCoach context={coachContext} />
 
       <div className="tile-grid">
         {tiles.map(t => {
