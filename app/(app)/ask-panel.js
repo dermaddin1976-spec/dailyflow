@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 
-export default function AskPanel({ context, placeholder }) {
+export default function AskPanel({ context, placeholder, domain }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function AskPanel({ context, placeholder }) {
       const res = await fetch('/api/ai/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context, question, history: priorMessages }),
+        body: JSON.stringify({ context, question, history: priorMessages, domain }),
       });
       const data = await res.json();
       if (!res.ok) {

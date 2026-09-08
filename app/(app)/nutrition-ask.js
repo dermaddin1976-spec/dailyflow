@@ -48,6 +48,7 @@ export default function NutritionAsk() {
       <AskPanel
         context={buildContext(logs)}
         placeholder="e.g. Why am I always low on protein? What did I eat most on weekends?"
+        domain="nutrition"
       />
     </div>
   );

@@ -19,7 +19,7 @@ export async function POST(request) {
     );
   }
 
-  const { context, question, history } = await request.json();
+  const { context, question, history, domain } = await request.json();
 
   if (!context || typeof context !== 'string') {
     return NextResponse.json({ error: 'No study material to ask about.' }, { status: 400 });
@@ -40,9 +40,28 @@ export async function POST(request) {
     .map(m => `${m.role === 'user' ? 'Student' : 'You'}: ${m.text}`)
     .join('\n');
 
-  const prompt = [
+  // Each tab's Ask panel passes its own domain so DailyAI answers as a
+  // specialist in that area instead of one generic assistant guessing at
+  // what kind of material it's looking at.
+  const PERSONAS = {
+    study: [
+      "You are DailyAI's study tutor — an expert at explaining academic material clearly, connecting related",
+      "concepts, catching gaps in understanding, and helping a student actually learn the material below (their",
+      'own notes, flashcards, or source summaries) rather than just repeating it back.',
+    ].join(' '),
+    nutrition: [
+      "You are DailyAI's nutrition coach — knowledgeable about sports nutrition, macros, and fueling for daily",
+      'training. The material below is the user\'s own logged meals. They train every day on purpose and want',
+      'practical advice on hitting their targets and supporting training, not generic diet talk.',
+    ].join(' '),
+  };
+  const persona = PERSONAS[domain] || [
     'You are DailyAI, a helpful assistant embedded in the DailyFlow app, answering questions about whatever',
     'material is provided below — this could be study notes, flashcards, a meal plan, or something else entirely.',
+  ].join(' ');
+
+  const prompt = [
+    persona,
     'Below is that material, then the conversation so far, then the user\'s new question.',
     'Answer the new question clearly and simply, grounding your answer in the material when it\'s relevant.',
     'If the question goes beyond what\'s in the material, you can still answer using your own knowledge, but say',

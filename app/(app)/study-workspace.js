@@ -474,6 +474,7 @@ export default function StudyWorkspace() {
         <AskPanel
           context={context}
           placeholder={`Ask anything about the "${activeDeck}" deck \u2014 DailyAI will answer using these cards.`}
+          domain="study"
         />
       </div>
     );
@@ -500,6 +501,7 @@ export default function StudyWorkspace() {
         <AskPanel
           context={context}
           placeholder={`Ask anything across the "${activeDeck}" notebook \u2014 DailyAI will use every deck and source summary in it.`}
+          domain="study"
         />
       </div>
     );

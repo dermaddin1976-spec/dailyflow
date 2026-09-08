@@ -119,6 +119,7 @@ function NoteEditor({ note, onSave, onDelete, onBack }) {
                 note.test_focus ? `Test focus:\n${note.test_focus}` : '',
               ].filter(Boolean).join('\n\n')}
               placeholder="Stuck on something in these notes? Ask about it here."
+              domain="study"
             />
           </div>
         )}
