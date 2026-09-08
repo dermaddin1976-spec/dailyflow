@@ -14,7 +14,9 @@ export async function POST(request) {
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { source_title, question, answer } = await request.json();
   if (!source_title || !question || !answer) return NextResponse.json({ error: 'Missing fields.' }, { status: 400 });
-  const result = await db.prepare('INSERT INTO flashcards (user_id, source_title, question, answer) VALUES (?, ?, ?, ?)').run(user.id, source_title, question, answer);
+  const result = await db.prepare(
+    'INSERT INTO flashcards (user_id, source_title, notebook, question, answer) VALUES (?, ?, ?, ?, ?)'
+  ).run(user.id, source_title, source_title, question, answer);
   return NextResponse.json({ ok: true, id: result.lastInsertRowid });
 }
 
@@ -26,5 +28,6 @@ export async function DELETE(request) {
   if (!title) return NextResponse.json({ error: 'Missing deck title.' }, { status: 400 });
   await db.prepare('DELETE FROM flashcards WHERE user_id=? AND source_title=?').run(user.id, title);
   await db.prepare('DELETE FROM quiz_questions WHERE user_id=? AND source_title=?').run(user.id, title);
+  await db.prepare('DELETE FROM study_sources WHERE user_id=? AND title=?').run(user.id, title);
   return NextResponse.json({ ok: true });
 }

@@ -75,12 +75,14 @@ function AddCardForm({ deckTitle, onAdd }) {
 
 export default function StudyWorkspace() {
   const [allCards, setAllCards] = useState([]);
+  const [allSources, setAllSources] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [notebookInput, setNotebookInput] = useState('');
   const [processingVideo, setProcessingVideo] = useState(false);
   const [activeDeck, setActiveDeck] = useState(null);
-  const [mode, setMode] = useState('review'); // 'review' | 'quiz' | 'manage'
+  const [mode, setMode] = useState('review'); // 'review' | 'quiz' | 'manage' | 'ask' | 'ask-notebook'
   const [manageIndex, setManageIndex] = useState(0);
   const [editQuestion, setEditQuestion] = useState('');
   const [editAnswer, setEditAnswer] = useState('');
@@ -101,6 +103,7 @@ export default function StudyWorkspace() {
 
   const refresh = useCallback(() => {
     fetch('/api/flashcards').then(r => r.json()).then(d => setAllCards(d.cards || [])).catch(() => {});
+    fetch('/api/study-sources').then(r => r.json()).then(d => setAllSources(d.sources || [])).catch(() => {});
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -112,6 +115,19 @@ export default function StudyWorkspace() {
     });
     return grouped;
   }, [allCards]);
+
+  // Groups deck titles that share a notebook so Ask can draw on all of them at
+  // once. A deck with no notebook set (or the pre-Notebooks-feature default)
+  // is its own single-deck notebook, so nothing about existing decks changes.
+  const notebooks = useMemo(() => {
+    const grouped = {};
+    Object.entries(decks).forEach(([title, cards]) => {
+      const nb = (cards[0] && cards[0].notebook) || title;
+      grouped[nb] = grouped[nb] || [];
+      grouped[nb].push(title);
+    });
+    return grouped;
+  }, [decks]);
 
   useEffect(() => {
     if (mode !== 'manage' || !activeDeck) return;
@@ -128,7 +144,7 @@ export default function StudyWorkspace() {
       const base64 = await fileToBase64(file);
       const res = await fetch('/api/ai/flashcards', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pdfBase64: base64, title: file.name.replace(/\.pdf$/i, '') }),
+        body: JSON.stringify({ pdfBase64: base64, title: file.name.replace(/\.pdf$/i, ''), notebook: notebookInput.trim() }),
       });
       const data = await res.json();
       if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
@@ -149,7 +165,7 @@ export default function StudyWorkspace() {
     try {
       const res = await fetch('/api/ai/flashcards-from-video', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: youtubeUrl.trim() }),
+        body: JSON.stringify({ url: youtubeUrl.trim(), notebook: notebookInput.trim() }),
       });
       const data = await res.json();
       if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
@@ -209,6 +225,46 @@ export default function StudyWorkspace() {
   function askDeck(title) {
     setActiveDeck(title);
     setMode('ask');
+  }
+
+  function askNotebook(name) {
+    setActiveDeck(name);
+    setMode('ask-notebook');
+  }
+
+  function renderDeckCard(title, cards) {
+    return (
+      <div key={title} className="card" style={{ border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+          <h3>{title}</h3>
+          <button
+            onClick={() => deleteDeck(title)}
+            aria-label="Delete deck"
+            style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 15, padding: '0 2px', flexShrink: 0 }}
+          >
+            &times;
+          </button>
+        </div>
+        <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 16 }}>{cards.length} card{cards.length === 1 ? '' : 's'}</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn wide" onClick={() => openDeck(title)}>Review</button>
+          <button className="btn secondary wide" onClick={() => startQuiz(title)}>Quiz</button>
+        </div>
+        <button
+          className="btn secondary wide"
+          onClick={() => askDeck(title)}
+          style={{ marginTop: 8, borderColor: 'var(--accent)', color: 'var(--accent)' }}
+        >
+          &#128172; Ask about this
+        </button>
+        <button
+          onClick={() => manageDeck(title)}
+          style={{ background: 'none', border: 'none', color: 'var(--text-2)', fontSize: 12.5, marginTop: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+        >
+          Edit cards
+        </button>
+      </div>
+    );
   }
 
   function startPass(cards) {
@@ -423,6 +479,32 @@ export default function StudyWorkspace() {
     );
   }
 
+  if (activeDeck && mode === 'ask-notebook') {
+    const deckTitles = notebooks[activeDeck] || [];
+    const sources = allSources.filter(s => s.notebook === activeDeck);
+    const parts = [`Notebook: ${activeDeck}`];
+    deckTitles.forEach(title => {
+      const cards = decks[title] || [];
+      parts.push(`--- Deck: ${title} ---`);
+      cards.forEach((c, i) => parts.push(`Q${i + 1}: ${c.question}\nA${i + 1}: ${c.answer}`));
+    });
+    sources.forEach(s => {
+      if (s.content) parts.push(`--- Source summary: ${s.title} ---\n${s.content}`);
+    });
+    const context = parts.join('\n\n');
+
+    return (
+      <div>
+        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 20 }}>&larr; Back to decks</button>
+        <h1 style={{ fontSize: 22, marginBottom: 16 }}>{activeDeck} &mdash; Ask this notebook</h1>
+        <AskPanel
+          context={context}
+          placeholder={`Ask anything across the "${activeDeck}" notebook \u2014 DailyAI will use every deck and source summary in it.`}
+        />
+      </div>
+    );
+  }
+
   if (activeDeck && mode === 'quiz') {
     const q = quizQuestions[quizIndex];
     const finished = !quizLoading && quizQuestions.length > 0 && quizIndex >= quizQuestions.length;
@@ -512,6 +594,22 @@ export default function StudyWorkspace() {
       <p style={{ color: 'var(--text-2)', marginBottom: 20, fontSize: 13.5 }}>Upload a PDF of your notes to get flashcards generated automatically, then quiz yourself on any deck with DailyAI-generated multiple-choice questions.</p>
 
       <div className="card" style={{ marginBottom: 28 }}>
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 8 }}>
+            Notebook <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(optional &mdash; group related sources so you can ask across all of them at once)</span>
+          </label>
+          <input
+            type="text"
+            list="notebook-options"
+            placeholder="e.g. Biology Midterm"
+            value={notebookInput}
+            onChange={e => setNotebookInput(e.target.value)}
+            style={{ width: '100%', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)', color: 'var(--text)', padding: '9px 11px', fontSize: 13.5 }}
+          />
+          <datalist id="notebook-options">
+            {Object.keys(notebooks).map(name => <option key={name} value={name} />)}
+          </datalist>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 24, alignItems: 'start' }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 8 }}>From a document</label>
@@ -559,38 +657,31 @@ export default function StudyWorkspace() {
             </p>
           </div>
         )}
-        {Object.entries(decks).map(([title, cards]) => (
-          <div key={title} className="card" style={{ border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-              <h3>{title}</h3>
-              <button
-                onClick={() => deleteDeck(title)}
-                aria-label="Delete deck"
-                style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 15, padding: '0 2px', flexShrink: 0 }}
-              >
-                &times;
-              </button>
+        {Object.entries(notebooks).map(([nbName, titles]) => {
+          if (titles.length <= 1) {
+            const title = titles[0];
+            return renderDeckCard(title, decks[title] || []);
+          }
+          return (
+            <div key={nbName} style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0 }}>
+                  {nbName} <span className="mono" style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>&middot; {titles.length} sources</span>
+                </h3>
+                <button
+                  className="btn secondary"
+                  onClick={() => askNotebook(nbName)}
+                  style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                >
+                  &#128172; Ask this notebook
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 18, marginBottom: 8 }}>
+                {titles.map(title => renderDeckCard(title, decks[title] || []))}
+              </div>
             </div>
-            <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 16 }}>{cards.length} card{cards.length === 1 ? '' : 's'}</p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn wide" onClick={() => openDeck(title)}>Review</button>
-              <button className="btn secondary wide" onClick={() => startQuiz(title)}>Quiz</button>
-            </div>
-            <button
-              className="btn secondary wide"
-              onClick={() => askDeck(title)}
-              style={{ marginTop: 8, borderColor: 'var(--accent)', color: 'var(--accent)' }}
-            >
-              &#128172; Ask about this
-            </button>
-            <button
-              onClick={() => manageDeck(title)}
-              style={{ background: 'none', border: 'none', color: 'var(--text-2)', fontSize: 12.5, marginTop: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
-            >
-              Edit cards
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <StudyNotes />

@@ -29,28 +29,37 @@ export async function POST(request) {
     );
   }
 
-  const { url } = await request.json();
+  const { url, notebook } = await request.json();
   if (!url || !YOUTUBE_RE.test(url)) {
     return NextResponse.json({ error: 'Please paste a public YouTube link (youtube.com/watch?v=... or youtu.be/...).' }, { status: 400 });
   }
 
   const videoTitle = await lookupVideoTitle(url);
   const sourceTitle = videoTitle || `YouTube video (${url})`;
+  const notebookName = (notebook || '').trim() || sourceTitle;
 
   try {
     const result = await callGemini({
       prompt: [
         'You are a study assistant. Watch this video and produce flashcards covering its key facts,',
-        'definitions, and concepts a student should memorize for a test.',
-        'Respond ONLY with JSON matching this shape: {"cards": [{"question": string, "answer": string}, ...]}.',
+        'definitions, and concepts a student should memorize for a test. Also write a thorough summary of',
+        "the video's content — a few paragraphs, dense with the actual facts and explanations it covers —",
+        "so it can be used later to answer questions the flashcards alone don't cover.",
+        'Respond ONLY with JSON matching this shape:',
+        '{"cards": [{"question": string, "answer": string}, ...], "summary": string}.',
         'Produce between 8 and 20 cards depending on how much material the video covers. Keep questions and answers concise.',
       ].join(' '),
       fileUri: url,
     });
     const cards = Array.isArray(result.cards) ? result.cards : [];
-    const insert = db.prepare('INSERT INTO flashcards (user_id, source_title, question, answer) VALUES (?, ?, ?, ?)');
+    const insert = db.prepare('INSERT INTO flashcards (user_id, source_title, notebook, question, answer) VALUES (?, ?, ?, ?, ?)');
     for (const c of cards) {
-      if (c && c.question && c.answer) await insert.run(user.id, sourceTitle, c.question, c.answer);
+      if (c && c.question && c.answer) await insert.run(user.id, sourceTitle, notebookName, c.question, c.answer);
+    }
+    if (result.summary) {
+      await db.prepare(
+        "INSERT INTO study_sources (user_id, notebook, title, content, source_type) VALUES (?, ?, ?, ?, 'video')"
+      ).run(user.id, notebookName, sourceTitle, String(result.summary).slice(0, 8000));
     }
     return NextResponse.json({ ok: true, count: cards.length, title: sourceTitle });
   } catch (err) {
