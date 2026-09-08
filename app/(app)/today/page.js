@@ -64,12 +64,15 @@ async function computeReadiness(userId, userAge) {
   const included = components.filter(c => c.score != null);
   const overall = included.length ? Math.round(included.reduce((s, c) => s + c.score, 0) / included.length) : null;
 
+  // Labels stay in "how to support today's session" language rather than
+  // "should I train" language — this user trains every day on purpose and
+  // does not want the app second-guessing that, low score or not.
   let label = 'Not enough data yet';
   if (overall != null) {
     if (overall >= 85) label = 'Primed';
     else if (overall >= 65) label = 'Steady';
-    else if (overall >= 45) label = 'Take it easier today';
-    else label = 'Prioritize recovery';
+    else if (overall >= 45) label = 'Support today\'s session';
+    else label = 'Fuel up before training';
   }
 
   return { overall, label, components };
