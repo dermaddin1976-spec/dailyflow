@@ -4,6 +4,7 @@ import db from '../../../lib/db.js';
 import { computeTargets, hasBodyProfile } from '../../../lib/nutrition.js';
 import InfoTip from '../info-tip.js';
 import MealLogger from '../meal-logger.js';
+import NutritionAsk from '../nutrition-ask.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -84,6 +85,7 @@ export default async function NutritionPage() {
       )}
 
       <MealLogger />
+      <NutritionAsk />
     </div>
   );
 }

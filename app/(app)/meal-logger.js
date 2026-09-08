@@ -165,6 +165,9 @@ export default function MealLogger() {
   const [msg, setMsg] = useState('');
   const [savedFlash, setSavedFlash] = useState('');
   const [items, setItems] = useState([]);
+  const [savedMeals, setSavedMeals] = useState([]);
+  const [saveFavorite, setSaveFavorite] = useState(false);
+  const [quickLogging, setQuickLogging] = useState(null);
 
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState('');
@@ -183,6 +186,7 @@ export default function MealLogger() {
 
   const refresh = useCallback(() => {
     fetch('/api/logs/meal').then(r => r.json()).then(d => setItems(d.logs || [])).catch(() => {});
+    fetch('/api/saved-meals').then(r => r.json()).then(d => setSavedMeals(d.meals || [])).catch(() => {});
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -216,11 +220,55 @@ export default function MealLogger() {
     });
     const data = await res.json();
     if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
-    setDescription(''); setCalories(''); setProtein(''); setCarbs(''); setFat(''); setEstimateMsg(''); setPhotoDataUrl('');
+    if (saveFavorite && description.trim()) {
+      // Fire-and-forget: a failed save-as-favorite shouldn't block the meal
+      // log itself from clearing and confirming.
+      fetch('/api/saved-meals', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description,
+          calories: parseInt(calories, 10) || null,
+          protein: parseInt(protein, 10) || null,
+          carbs: parseInt(carbs, 10) || null,
+          fat: parseInt(fat, 10) || null,
+        }),
+      }).then(refresh).catch(() => {});
+    }
+    setDescription(''); setCalories(''); setProtein(''); setCarbs(''); setFat(''); setEstimateMsg(''); setPhotoDataUrl(''); setSaveFavorite(false);
     setSavedFlash('Saved.');
     setTimeout(() => setSavedFlash(''), 1500);
     refresh();
     router.refresh();
+  }
+
+  // Logs a saved meal's exact stored numbers with no AI call, so a repeat
+  // meal (same breakfast, same shake) never drifts between separate AI
+  // estimates of what is really the same thing.
+  async function logQuickMeal(meal) {
+    setQuickLogging(meal.id);
+    setMsg('');
+    try {
+      const res = await fetch('/api/logs/meal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: todayStr(), description: meal.description,
+          calories: meal.calories, protein: meal.protein, carbs: meal.carbs, fat: meal.fat,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
+      setSavedFlash(`Logged "${meal.description}".`);
+      setTimeout(() => setSavedFlash(''), 1500);
+      refresh();
+      router.refresh();
+    } finally {
+      setQuickLogging(null);
+    }
+  }
+
+  async function deleteSavedMeal(id) {
+    await fetch(`/api/saved-meals/${id}`, { method: 'DELETE' });
+    refresh();
   }
 
   async function applyEstimate(base64, mimeType) {
@@ -395,10 +443,47 @@ export default function MealLogger() {
         <InfoTip>
           DailyAI reads your photo, or your written description if you forgot to log something at the time, and
           takes a guess at calories, protein, carbs and fat &mdash; it's a starting point, not a lab measurement, so
-          check the numbers (and confidence note) before saving.
+          check the numbers (and confidence note) before saving. Quick-add meals skip the AI guess entirely and log
+          the exact numbers you saved last time, which is the more accurate choice for anything you eat repeatedly.
         </InfoTip>
         {savedFlash && <span style={{ color: 'var(--good)', fontSize: 13, fontWeight: 600 }}>{savedFlash}</span>}
       </div>
+
+      {savedMeals.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 8 }}>
+            Quick add <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(exact saved numbers, no AI guess)</span>
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {savedMeals.map(m => (
+              <span
+                key={m.id}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 2, border: '1px solid var(--border-strong)',
+                  borderRadius: 999, padding: '2px 2px 2px 12px', fontSize: 12.5, background: 'var(--surface-2)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => logQuickMeal(m)}
+                  disabled={quickLogging === m.id}
+                  style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', padding: '5px 4px' }}
+                >
+                  {quickLogging === m.id ? 'Logging…' : `${m.description} · ${m.calories ?? '–'} cal`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteSavedMeal(m.id)}
+                  aria-label={`Remove "${m.description}" from quick add`}
+                  style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 14, cursor: 'pointer', padding: '4px 8px' }}
+                >
+                  &times;
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {cameraOpen ? (
         <div style={{ marginTop: 14 }}>
@@ -500,7 +585,11 @@ export default function MealLogger() {
           </button>
         </div>
       )}
-      <button className="btn wide" style={{ marginTop: 18 }} type="submit">Save meal</button>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 12.5, color: 'var(--text-2)', cursor: 'pointer' }}>
+        <input type="checkbox" checked={saveFavorite} onChange={e => setSaveFavorite(e.target.checked)} />
+        Save as a quick-add meal for next time
+      </label>
+      <button className="btn wide" style={{ marginTop: 12 }} type="submit">Save meal</button>
 
       <LogHistory
         items={items}
