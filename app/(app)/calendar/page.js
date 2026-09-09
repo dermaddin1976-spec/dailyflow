@@ -1,6 +1,7 @@
 import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import CalendarView from './calendar-view.js';
+import DeadlinesCard from '../deadlines-card.js';
 
 export default async function CalendarPage({ searchParams }) {
   const user = await requireUser();
@@ -18,6 +19,9 @@ export default async function CalendarPage({ searchParams }) {
         googleCalendarEmail={user.google_calendar_email || null}
         gcalStatus={gcalStatus}
       />
+      <div style={{ marginTop: 20 }}>
+        <DeadlinesCard />
+      </div>
     </div>
   );
 }

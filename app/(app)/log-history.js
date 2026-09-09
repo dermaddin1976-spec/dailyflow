@@ -17,8 +17,14 @@ function dayLabel(dateStr) {
 // as a collapsible row instead of one long flat scrolling list. Today is always
 // expanded; every other day starts collapsed and expands on click, so a click
 // on a day is effectively "show me what I logged that day."
-export default function LogHistory({ items, renderItem, summarize, emptyText }) {
+//
+// With months of daily logging, even one collapsed row per day adds up to a
+// long scroll on its own, so only the most recent `initialGroups` days show by
+// default — older days are one click away behind "Show N earlier days" rather
+// than always rendered.
+export default function LogHistory({ items, renderItem, summarize, emptyText, initialGroups = 8 }) {
   const [openDates, setOpenDates] = useState(() => new Set());
+  const [showAll, setShowAll] = useState(false);
 
   if (!items || items.length === 0) {
     return <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 13 }}>{emptyText || 'Nothing logged yet.'}</p>;
@@ -37,6 +43,8 @@ export default function LogHistory({ items, renderItem, summarize, emptyText }) 
   }
 
   const today = new Date().toISOString().slice(0, 10);
+  const visibleGroups = showAll ? groups : groups.slice(0, initialGroups);
+  const hiddenCount = groups.length - visibleGroups.length;
 
   function toggle(date) {
     setOpenDates(prev => {
@@ -48,7 +56,7 @@ export default function LogHistory({ items, renderItem, summarize, emptyText }) 
 
   return (
     <div style={{ marginTop: 13, borderTop: '1px solid var(--border)', paddingTop: 4, display: 'flex', flexDirection: 'column' }}>
-      {groups.map(group => {
+      {visibleGroups.map(group => {
         const isOpen = group.date === today || openDates.has(group.date);
         return (
           <div key={group.date} style={{ borderBottom: '1px solid var(--border)' }}>
@@ -79,6 +87,18 @@ export default function LogHistory({ items, renderItem, summarize, emptyText }) 
           </div>
         );
       })}
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          style={{
+            background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12.5, fontWeight: 600,
+            fontFamily: 'inherit', cursor: 'pointer', padding: '11px 0', textAlign: 'left',
+          }}
+        >
+          Show {hiddenCount} earlier day{hiddenCount === 1 ? '' : 's'} &darr;
+        </button>
+      )}
     </div>
   );
 }

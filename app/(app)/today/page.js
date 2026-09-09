@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
-import DeadlinesCard from '../deadlines-card.js';
 import InfoTip from '../info-tip.js';
 import { recommendedSleepHours, computeSleepDebt, formatHM } from '../../../lib/sleep.js';
 import { computeStreak } from '../../../lib/streak.js';
@@ -13,7 +12,6 @@ import { lastNDates } from '../bar-chart.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function dateStr(offset){ const d = new Date(); d.setDate(d.getDate() + offset); return d.toISOString().slice(0,10); }
-function daysBetween(a, b) { return Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / 86400000); }
 
 async function computeReadiness(userId, userAge) {
   const weekStart = dateStr(-6), weekEnd = dateStr(0);
@@ -105,9 +103,8 @@ export default async function TodayPage() {
   const debtDates = lastNDates(DEBT_WINDOW_DAYS);
 
   // None of these reads depend on each other's results, so run them all at
-  // once instead of one after another — this page was firing off 12
-  // sequential round trips to the database before this change.
-  const [sleep, study, workout, meals, readiness, allWorkoutDateRows, debtRows, latestPlan] = await Promise.all([
+  // once instead of one after another.
+  const [sleep, study, workout, meals, readiness, allWorkoutDateRows, debtRows] = await Promise.all([
     db.prepare('SELECT * FROM sleep_logs WHERE user_id=? AND date=? ORDER BY id DESC LIMIT 1').get(user.id, date),
     db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM study_logs WHERE user_id=? AND date=?').get(user.id, date),
     db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM workout_logs WHERE user_id=? AND date=?').get(user.id, date),
@@ -117,7 +114,6 @@ export default async function TodayPage() {
     db.prepare(
       'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
     ).all(user.id, debtDates[0], debtDates[debtDates.length - 1]),
-    db.prepare('SELECT * FROM meal_plans WHERE user_id=? ORDER BY id DESC LIMIT 1').get(user.id),
   ]);
 
   // readinessTip and coachContext depend on the readiness result above, so
@@ -134,16 +130,6 @@ export default async function TodayPage() {
   const allWorkoutDates = allWorkoutDateRows.map(r => r.date);
   const streak = computeStreak(allWorkoutDates);
   const sleepDebt = computeSleepDebt(debtRows.map(r => r.hours), recommendedSleepHours(user.age), DEBT_WINDOW_DAYS);
-
-  let todaysMeals = null;
-  if (latestPlan) {
-    const planStart = latestPlan.created_at.slice(0, 10);
-    const dayIndex = daysBetween(planStart, date);
-    const planDays = latestPlan.plan_json ? JSON.parse(latestPlan.plan_json) : [];
-    if (dayIndex >= 0 && dayIndex < planDays.length) {
-      todaysMeals = { plan: latestPlan, day: planDays[dayIndex] };
-    }
-  }
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
@@ -169,7 +155,7 @@ export default async function TodayPage() {
       <p style={{ color: 'var(--text-2)', marginBottom: summaryLine ? 4 : 24 }}>Here&rsquo;s today at a glance.</p>
       {summaryLine && <p className="mono" style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 18 }}>{summaryLine}</p>}
 
-      <div className="card" style={{ marginBottom: 18, padding: 20 }}>
+      <div className="card" style={{ marginBottom: 13, padding: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em' }}>READINESS</span>
           <InfoTip>
@@ -221,6 +207,31 @@ export default async function TodayPage() {
         )}
       </div>
 
+      {/* Raw numbers behind the readiness score above, folded into one slim strip right
+          underneath it instead of five separate full-size cards further down the page. */}
+      <div className="card" style={{ marginBottom: 18, padding: '14px 20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(76px, 1fr))', gap: 12 }}>
+          {tiles.map(t => {
+            const isStreak = t.label === 'STREAK' && streak > 0;
+            return (
+              <div key={t.label}>
+                <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--muted)', letterSpacing: '.03em' }}>{t.label}</div>
+                <div
+                  className="mono"
+                  style={{
+                    fontSize: 18, fontWeight: 700, marginTop: 3,
+                    color: isStreak ? '#ffb088' : undefined,
+                    textShadow: isStreak ? '0 0 14px color-mix(in srgb, var(--warning) 50%, transparent)' : undefined,
+                  }}
+                >
+                  {t.value}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {proactiveInsight && (
         <div className="card" style={{
           marginBottom: 18, padding: '18px 24px', display: 'flex', gap: 11, alignItems: 'flex-start',
@@ -246,57 +257,11 @@ export default async function TodayPage() {
 
       <TodayCoach context={coachContext} />
 
-      <div className="tile-grid">
-        {tiles.map(t => {
-          const isStreak = t.label === 'STREAK' && streak > 0;
-          return (
-            <div
-              className="card"
-              key={t.label}
-              style={isStreak ? {
-                background: 'linear-gradient(160deg, color-mix(in srgb, var(--warning) 20%, var(--surface)), color-mix(in srgb, var(--surface) 82%, transparent))',
-                borderColor: 'color-mix(in srgb, var(--warning) 32%, var(--border))',
-              } : undefined}
-            >
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em' }}>{t.label}</div>
-              <div
-                style={{
-                  fontSize: 28, fontWeight: 700, marginTop: 6,
-                  color: isStreak ? '#ffb088' : undefined,
-                  textShadow: isStreak ? '0 0 18px color-mix(in srgb, var(--warning) 55%, transparent)' : undefined,
-                }}
-                className="mono"
-              >
-                {t.value}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {todaysMeals && (
-        <div className="card" style={{ marginTop: 13 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <h3 style={{ margin: 0 }}>Today&rsquo;s meals</h3>
-            <Link href={`/nutrition/planner?open=${todaysMeals.plan.id}`} style={{ fontSize: 12.5, flexShrink: 0 }}>View full plan &rarr;</Link>
-          </div>
-          <p style={{ color: 'var(--muted)', fontSize: 11.5, marginBottom: 12 }}>{todaysMeals.plan.title} &middot; {todaysMeals.day.day}</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {todaysMeals.day.meals.map((m, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 13.5 }}>
-                <span>
-                  <span className="mono" style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.4, marginRight: 8 }}>{m.meal}</span>
-                  {m.name}
-                </span>
-                <span className="mono" style={{ color: 'var(--muted)', fontSize: 11.5, flexShrink: 0 }}>{m.calories} cal</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <DeadlinesCard />
-      <p style={{ marginTop: 18 }}><Link href="/log">See recent activity, or log something for today &rarr;</Link></p>
+      <p style={{ marginTop: 18 }}>
+        <Link href="/log">See recent activity, or log something for today &rarr;</Link>
+        {' · '}
+        <Link href="/calendar">Deadlines are on the Calendar tab &rarr;</Link>
+      </p>
     </div>
   );
 }
