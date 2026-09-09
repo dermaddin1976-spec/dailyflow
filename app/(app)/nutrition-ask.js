@@ -2,14 +2,30 @@
 import { useState, useEffect } from 'react';
 import AskPanel from './ask-panel.js';
 
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function yesterdayStr() { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); }
+
 function buildContext(logs) {
+  const today = todayStr();
+  const yesterday = yesterdayStr();
+  // Same fix as the Today-tab coach: without an explicit "today" anchor the
+  // model has to guess which listed date is current, and guesses wrong.
+  function labelDate(d) {
+    if (d === today) return `${d} (today)`;
+    if (d === yesterday) return `${d} (yesterday)`;
+    return d;
+  }
+
   const byDate = {};
   logs.forEach(l => {
     byDate[l.date] = byDate[l.date] || [];
     byDate[l.date].push(l);
   });
   const dates = Object.keys(byDate).sort().reverse().slice(0, 30);
-  const lines = ['Recently logged meals, most recent day first:'];
+  const lines = [
+    `Today's date is ${today}. Recently logged meals, most recent day first \u2014 dates are marked (today) or ` +
+    '(yesterday) where relevant; always go by those explicit dates and labels, never guess which row is "today".',
+  ];
   dates.forEach(date => {
     const dayLogs = byDate[date];
     const totals = dayLogs.reduce((acc, l) => ({
@@ -18,7 +34,7 @@ function buildContext(logs) {
       carbs: acc.carbs + (l.carbs || 0),
       fat: acc.fat + (l.fat || 0),
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
-    lines.push(`\n${date} — day total ${totals.calories} cal, ${totals.protein}g protein, ${totals.carbs}g carbs, ${totals.fat}g fat:`);
+    lines.push(`\n${labelDate(date)} — day total ${totals.calories} cal, ${totals.protein}g protein, ${totals.carbs}g carbs, ${totals.fat}g fat:`);
     dayLogs.forEach(l => {
       lines.push(`  - ${l.description}: ${l.calories ?? '?'} cal, ${l.protein ?? '?'}g protein, ${l.carbs ?? '?'}g carbs, ${l.fat ?? '?'}g fat`);
     });
