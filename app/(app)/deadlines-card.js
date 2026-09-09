@@ -133,8 +133,8 @@ export default function DeadlinesCard() {
   }
 
   return (
-    <div className="card" style={{ marginTop: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+    <div className="card" style={{ marginTop: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 11 }}>
         <h3 style={{ margin: 0 }}>Deadlines</h3>
         <InfoTip>
           The color tells you how urgent something is: red means it's due today or tomorrow, yellow means it's due
@@ -151,7 +151,7 @@ export default function DeadlinesCard() {
             Found {pending.length} deadline{pending.length === 1 ? '' : 's'} &mdash; review before adding.
           </p>
           {extractMsg && <p style={{ fontSize: 12, color: 'var(--warning)', marginBottom: 10 }}>{extractMsg}</p>}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 11 }}>
             {pending.map((d, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input type="checkbox" checked={d.include} onChange={e => updatePending(i, { include: e.target.checked })} />
@@ -201,7 +201,7 @@ export default function DeadlinesCard() {
               );
             })}
           </div>
-          <form onSubmit={addDeadline} style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+          <form onSubmit={addDeadline} style={{ display: 'flex', gap: 8, marginTop: 13, flexWrap: 'wrap' }}>
             <input
               style={{ flex: '1 1 160px', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)', color: 'var(--text)', padding: '9px 11px', fontSize: 13.5 }}
               placeholder="Chemistry midterm"
@@ -220,7 +220,7 @@ export default function DeadlinesCard() {
           </form>
           {msg && <p className="error-text">{msg}</p>}
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 11, flexWrap: 'wrap' }}>
             <label className="btn secondary" style={{ fontSize: 12.5, padding: '8px 14px', display: 'inline-block' }}>
               {extracting ? (<><span className="spinner" />Reading…</>) : 'Upload syllabus (PDF)'}
               <input type="file" accept="application/pdf" onChange={handlePdf} disabled={extracting} style={{ display: 'none' }} />

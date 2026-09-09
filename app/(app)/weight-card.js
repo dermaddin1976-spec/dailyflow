@@ -50,7 +50,7 @@ export default function WeightCard({ initialWeightKg }) {
   const chartEntries = [...entries].reverse();
 
   return (
-    <div className="card" style={{ maxWidth: 420, marginTop: 20 }}>
+    <div className="card" style={{ maxWidth: 420, marginTop: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <h3 style={{ margin: 0 }}>Weight</h3>
         <InfoTip>
@@ -61,7 +61,7 @@ export default function WeightCard({ initialWeightKg }) {
         {savedFlash && <span style={{ color: 'var(--good)', fontSize: 13, fontWeight: 600 }}>{savedFlash}</span>}
       </div>
 
-      <div style={{ marginTop: 14 }}>
+      <div style={{ marginTop: 11 }}>
         {entries.length === 0 ? (
           <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>Nothing logged yet.</p>
         ) : (
@@ -69,7 +69,7 @@ export default function WeightCard({ initialWeightKg }) {
         )}
       </div>
 
-      <form onSubmit={submit} style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+      <form onSubmit={submit} style={{ display: 'flex', gap: 8, marginTop: 13 }}>
         <input
           type="number" step="0.1" min="0" placeholder="kg" value={weight}
           onChange={e => setWeight(e.target.value)} style={{ ...fieldStyle, flex: 1 }}
@@ -82,7 +82,7 @@ export default function WeightCard({ initialWeightKg }) {
       {msg && <p className="error-text" style={{ marginTop: 8 }}>{msg}</p>}
 
       {entries.length > 0 && (
-        <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ marginTop: 13, borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {entries.slice(0, 6).map(e => (
             <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
               <span style={{ color: 'var(--text-2)' }}>{e.date}{e.source === 'apple_health' ? ' · Apple Health' : ''}</span>

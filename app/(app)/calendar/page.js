@@ -11,7 +11,7 @@ export default async function CalendarPage({ searchParams }) {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, marginBottom: 20 }}>Calendar</h1>
+      <h1 style={{ fontSize: 24, marginBottom: 16 }}>Calendar</h1>
       <CalendarView
         deadlines={deadlines}
         googleCalendarConnected={!!user.google_calendar_connected}

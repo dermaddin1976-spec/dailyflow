@@ -30,7 +30,7 @@ export function ProfileForm({ user }) {
         <label>Email</label>
         <input value={user.email} disabled />
       </div>
-      <button className="btn" style={{ marginTop: 16 }} type="submit">Save profile</button>
+      <button className="btn" style={{ marginTop: 13 }} type="submit">Save profile</button>
       {ok && <span style={{ marginLeft: 12, color: 'var(--good)', fontSize: 13 }}>Saved.</span>}
       {msg && <p className="error-text">{msg}</p>}
     </form>
@@ -77,7 +77,7 @@ export function BodyForm({ user }) {
   }
 
   return (
-    <form className="card" onSubmit={submit} style={{ maxWidth: 420, marginTop: 20 }}>
+    <form className="card" onSubmit={submit} style={{ maxWidth: 420, marginTop: 16 }}>
       <h3>Body &amp; goals</h3>
       <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
         Used to work out a daily calorie and macro target on the Nutrition tab. Nothing here is shared or shown to anyone else.
@@ -124,7 +124,7 @@ export function BodyForm({ user }) {
           </span>
         </div>
       )}
-      <button className="btn" style={{ marginTop: 16 }} type="submit">Save &amp; recalculate</button>
+      <button className="btn" style={{ marginTop: 13 }} type="submit">Save &amp; recalculate</button>
       {ok && <span style={{ marginLeft: 12, color: 'var(--good)', fontSize: 13 }}>Saved.</span>}
       {msg && <p className="error-text">{msg}</p>}
     </form>
@@ -151,7 +151,7 @@ export function PasswordForm() {
   }
 
   return (
-    <form className="card" onSubmit={submit} style={{ maxWidth: 420, marginTop: 20 }}>
+    <form className="card" onSubmit={submit} style={{ maxWidth: 420, marginTop: 16 }}>
       <h3>Change password</h3>
       <div className="field">
         <label>Current password</label>
@@ -161,7 +161,7 @@ export function PasswordForm() {
         <label>New password</label>
         <input type="password" value={next} onChange={e => setNext(e.target.value)} required minLength={8} />
       </div>
-      <button className="btn" style={{ marginTop: 16 }} type="submit">Update password</button>
+      <button className="btn" style={{ marginTop: 13 }} type="submit">Update password</button>
       {ok && <span style={{ marginLeft: 12, color: 'var(--good)', fontSize: 13 }}>Updated.</span>}
       {msg && <p className="error-text">{msg}</p>}
     </form>
@@ -181,7 +181,7 @@ export function StravaConnectionCard({ connected, status }) {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 420, marginTop: 20 }}>
+    <div className="card" style={{ maxWidth: 420, marginTop: 16 }}>
       <h3>Connected accounts</h3>
 
       {status === 'not_configured' && (
@@ -236,7 +236,7 @@ export function GoogleCalendarCard({ connected, email, status }) {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 420, marginTop: 20 }}>
+    <div className="card" style={{ maxWidth: 420, marginTop: 16 }}>
       {status === 'not_configured' && (
         <p className="error-text" style={{ marginTop: 8 }}>
           Google Calendar isn&rsquo;t set up yet — add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env.local first (see below).
@@ -348,7 +348,7 @@ export function StravaImportCard({ connected }) {
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selected.has(id));
 
   return (
-    <div className="card" style={{ marginTop: 20 }}>
+    <div className="card" style={{ marginTop: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
         <div>
           <h3 style={{ margin: 0 }}>Strava</h3>
@@ -364,7 +364,7 @@ export function StravaImportCard({ connected }) {
       </div>
 
       {activities && (
-        <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+        <div style={{ marginTop: 11, borderTop: '1px solid var(--border)', paddingTop: 11 }}>
           {activities.length === 0 ? (
             <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>No new activities on Strava &mdash; you&rsquo;re already up to date.</p>
           ) : (
@@ -503,7 +503,7 @@ export function NotificationsCard() {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 420, marginTop: 20 }}>
+    <div className="card" style={{ maxWidth: 420, marginTop: 16 }}>
       <h3>Notifications</h3>
       <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
         Once a day in the evening, DailyFlow checks what you haven&rsquo;t logged yet &mdash; meals, sleep, study,
@@ -570,7 +570,7 @@ export function AppleHealthCard({ connected }) {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 420, marginTop: 20 }}>
+    <div className="card" style={{ maxWidth: 420, marginTop: 16 }}>
       <h3>Apple Health</h3>
       <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
         Sync sleep, weight, and workouts from a Shortcuts automation on your phone &mdash; Apple doesn&rsquo;t offer
@@ -578,7 +578,7 @@ export function AppleHealthCard({ connected }) {
       </p>
 
       {revealedToken ? (
-        <div style={{ marginTop: 14 }}>
+        <div style={{ marginTop: 11 }}>
           <p style={{ fontSize: 12, color: 'var(--warning)', marginBottom: 6 }}>Copy this now &mdash; it won&rsquo;t be shown again.</p>
           <div style={{ display: 'flex', gap: 8 }}>
             <input
@@ -594,7 +594,7 @@ export function AppleHealthCard({ connected }) {
           </div>
         </div>
       ) : (
-        <div className="btn-row" style={{ marginTop: 14 }}>
+        <div className="btn-row" style={{ marginTop: 11 }}>
           <button className="btn secondary" onClick={generate} disabled={generating}>
             {generating ? 'Generating…' : connected ? 'Regenerate token' : 'Generate access token'}
           </button>
@@ -610,7 +610,7 @@ export function AppleHealthCard({ connected }) {
         <p style={{ fontSize: 12, color: 'var(--good)', marginTop: 10 }}>A token is active.</p>
       )}
 
-      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+      <div style={{ marginTop: 13, paddingTop: 11, borderTop: '1px solid var(--border)' }}>
         <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6 }}>Webhook URL for your Shortcut</p>
         <code style={{
           display: 'block', fontSize: 11.5, wordBreak: 'break-all', color: 'var(--muted)',
@@ -685,7 +685,7 @@ export function AdminPasswordResetsCard() {
   }
 
   return (
-    <div className="card" style={{ marginTop: 20 }}>
+    <div className="card" style={{ marginTop: 16 }}>
       <h3>Password reset requests</h3>
       <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
         There&rsquo;s no email sending set up, so this is how a friend gets back into their account: they hit
@@ -693,7 +693,7 @@ export function AdminPasswordResetsCard() {
         here and send it to them yourself. Links expire after an hour.
       </p>
 
-      <form onSubmit={generate} style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+      <form onSubmit={generate} style={{ display: 'flex', gap: 8, marginTop: 11 }}>
         <input
           type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="friend@email.com" required
           style={{
@@ -705,7 +705,7 @@ export function AdminPasswordResetsCard() {
       </form>
       {genMsg && <p style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 8 }}>{genMsg}</p>}
 
-      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+      <div style={{ marginTop: 13, paddingTop: 11, borderTop: '1px solid var(--border)' }}>
         {loading ? (
           <p style={{ fontSize: 12.5, color: 'var(--muted)' }}>Loading…</p>
         ) : requests.length === 0 ? (
@@ -764,13 +764,13 @@ export function AdminUsersCard() {
   }
 
   return (
-    <div className="card" style={{ marginTop: 20 }}>
+    <div className="card" style={{ marginTop: 16 }}>
       <h3>Accounts</h3>
       <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
         Everyone who has signed up. Banning signs someone out everywhere and blocks them from logging back in.
       </p>
       {err && <p className="error-text">{err}</p>}
-      <div style={{ marginTop: 14 }}>
+      <div style={{ marginTop: 11 }}>
         {loading ? (
           <p style={{ fontSize: 12.5, color: 'var(--muted)' }}>Loading…</p>
         ) : users.length === 0 ? (

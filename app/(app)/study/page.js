@@ -31,13 +31,13 @@ export default async function StudyPage() {
           fills in once you've logged a few sessions.
         </InfoTip>
       </div>
-      <p style={{ color: 'var(--text-2)', marginBottom: 24 }}>This week&rsquo;s study time, plus your flashcard decks and DailyAI-generated notes.</p>
+      <p style={{ color: 'var(--text-2)', marginBottom: 18 }}>This week&rsquo;s study time, plus your flashcard decks and DailyAI-generated notes.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 24, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 18, marginBottom: 20 }}>
         <BarChart title="Minutes per day" unit="m" dates={dates} values={dates.map(d => dailyMap[d] || 0)} />
 
         <div className="card">
-          <h3 style={{ marginBottom: 14 }}>This week</h3>
+          <h3 style={{ marginBottom: 11 }}>This week</h3>
           <div className="mini-stats">
             <div>
               <div style={{ fontSize: 11.5, color: 'var(--muted)', letterSpacing: '.03em' }}>TOTAL</div>

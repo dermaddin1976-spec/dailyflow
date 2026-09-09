@@ -195,7 +195,7 @@ export default function StudyLogger() {
 
   return (
     <>
-      <div className="card" style={{ marginBottom: 20 }}>
+      <div className="card" style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <h3 style={{ margin: 0 }}>Study timer</h3>
           <InfoTip>
@@ -203,7 +203,7 @@ export default function StudyLogger() {
             form below so you're not tracking time yourself and typing it in afterward.
           </InfoTip>
         </div>
-        <div className="field" style={{ marginTop: 14 }}>
+        <div className="field" style={{ marginTop: 11 }}>
           <label>What are you studying?</label>
           <input
             value={timerSubject}
@@ -230,7 +230,7 @@ export default function StudyLogger() {
         {filledFlash && <p style={{ color: 'var(--good)', fontSize: 12.5, marginTop: 10 }}>{filledFlash}</p>}
       </div>
 
-      <form className="card" onSubmit={submit} style={{ marginBottom: 40 }}>
+      <form className="card" onSubmit={submit} style={{ marginBottom: 28 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <h3 style={{ margin: 0 }}>Log a study session</h3>
         <InfoTip>
@@ -258,7 +258,7 @@ export default function StudyLogger() {
         <label>Notes (optional)</label>
         <input value={note} onChange={e => setNote(e.target.value)} placeholder="What you covered..." />
       </div>
-      <button className="btn wide" style={{ marginTop: 18 }} type="submit">Save session</button>
+      <button className="btn wide" style={{ marginTop: 14 }} type="submit">Save session</button>
 
       <LogHistory
         items={items}

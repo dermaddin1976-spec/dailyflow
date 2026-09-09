@@ -189,13 +189,13 @@ export default function CalendarView({ deadlines, googleCalendarConnected, googl
   return (
     <div>
       {gcalStatus === 'connected' && (
-        <p style={{ color: 'var(--good)', fontSize: 13, marginBottom: 14 }}>Google Calendar connected — hit &ldquo;Sync&rdquo; below to pull in your events.</p>
+        <p style={{ color: 'var(--good)', fontSize: 13, marginBottom: 11 }}>Google Calendar connected — hit &ldquo;Sync&rdquo; below to pull in your events.</p>
       )}
       {gcalStatus === 'error' && (
-        <p className="error-text" style={{ marginBottom: 14 }}>Couldn&rsquo;t connect to Google Calendar. Try again from Settings.</p>
+        <p className="error-text" style={{ marginBottom: 11 }}>Couldn&rsquo;t connect to Google Calendar. Try again from Settings.</p>
       )}
 
-      <div className="card" style={{ marginBottom: 20 }}>
+      <div className="card" style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button className="btn secondary" onClick={() => goToMonth(-1)} aria-label="Previous month" style={{ padding: '8px 14px' }}>&larr;</button>
@@ -216,7 +216,7 @@ export default function CalendarView({ deadlines, googleCalendarConnected, googl
         {syncMsg && <p style={{ fontSize: 12.5, color: 'var(--text-2)', marginTop: 10 }}>{syncMsg}</p>}
         {err && <p className="error-text">{err}</p>}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginTop: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginTop: 14 }}>
           {WEEKDAY_LABELS.map(l => (
             <div key={l} style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', textAlign: 'center', padding: '2px 0' }}>{l}</div>
           ))}
@@ -271,7 +271,7 @@ export default function CalendarView({ deadlines, googleCalendarConnected, googl
         ) : selectedItems.length === 0 ? (
           <p style={{ color: 'var(--text-2)', fontSize: 13, marginTop: 12 }}>Nothing on the calendar for this day.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 11 }}>
             {selectedItems.map(it => (
               <div
                 key={`${it.kind}-${it.id}`}
@@ -308,7 +308,7 @@ export default function CalendarView({ deadlines, googleCalendarConnected, googl
       {form && (
         <div
           onClick={() => setForm(null)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 13 }}
         >
           <form
             onClick={e => e.stopPropagation()}
@@ -330,12 +330,12 @@ export default function CalendarView({ deadlines, googleCalendarConnected, googl
               <label>Date</label>
               <input type="date" style={fieldStyle} value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required />
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 13 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 11, fontSize: 13 }}>
               <input type="checkbox" checked={form.allDay} onChange={e => setForm({ ...form, allDay: e.target.checked })} />
               All day
             </label>
             {!form.allDay && (
-              <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <div style={{ display: 'flex', gap: 10, marginTop: 11 }}>
                 <div className="field" style={{ marginTop: 0, flex: 1 }}>
                   <label>Starts</label>
                   <input type="time" style={fieldStyle} value={form.startTime} onChange={e => setForm({ ...form, startTime: e.target.value })} />
@@ -354,7 +354,7 @@ export default function CalendarView({ deadlines, googleCalendarConnected, googl
               <label>Notes</label>
               <textarea style={{ ...fieldStyle, minHeight: 60, resize: 'vertical' }} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
             </div>
-            <div className="btn-row" style={{ marginTop: 18 }}>
+            <div className="btn-row" style={{ marginTop: 14 }}>
               <button type="submit" className="btn" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
               <button type="button" className="btn secondary" onClick={() => setForm(null)}>Cancel</button>
               {form.id && (

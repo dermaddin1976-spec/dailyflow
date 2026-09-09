@@ -65,13 +65,13 @@ export default async function SportPage() {
           pull that score down, so this is where you can see the number behind it.
         </InfoTip>
       </div>
-      <p style={{ color: 'var(--text-2)', marginBottom: 24 }}>This week&rsquo;s training load.</p>
+      <p style={{ color: 'var(--text-2)', marginBottom: 18 }}>This week&rsquo;s training load.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 24, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 18, marginBottom: 20 }}>
         <BarChart title="Minutes per day" unit="m" dates={dates} values={dates.map(d => dailyMap[d] || 0)} />
 
         <div className="card">
-          <h3 style={{ marginBottom: 14 }}>This week</h3>
+          <h3 style={{ marginBottom: 11 }}>This week</h3>
           <div className={`mini-stats${byType.length ? '' : ' no-margin'}`}>
             <div>
               <div style={{ fontSize: 11.5, color: 'var(--muted)', letterSpacing: '.03em' }}>TOTAL</div>
@@ -101,7 +101,7 @@ export default async function SportPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 24, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 18, marginBottom: 20 }}>
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <h3 style={{ margin: 0 }}>Streak</h3>

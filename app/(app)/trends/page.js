@@ -91,9 +91,9 @@ export default async function TrendsPage({ searchParams }) {
           alongside them so this page gives the fuller picture in one place.
         </InfoTip>
       </div>
-      <p style={{ color: 'var(--text-2)', marginBottom: 20 }}>Last {rangeDays} days.</p>
+      <p style={{ color: 'var(--text-2)', marginBottom: 16 }}>Last {rangeDays} days.</p>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
         {RANGE_OPTIONS.map(n => (
           <Link
             key={n}
@@ -106,7 +106,7 @@ export default async function TrendsPage({ searchParams }) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 16, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 13, marginBottom: 20 }}>
         <Link href="/sport" className="card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
           <div style={{ fontSize: 11.5, color: 'var(--muted)', letterSpacing: '.03em' }}>TRAINING STREAK</div>
           <div className="mono" style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{streak}d</div>
@@ -120,7 +120,7 @@ export default async function TrendsPage({ searchParams }) {
       {!hasAny && (
         <p style={{ color: 'var(--muted)' }}>Nothing logged in the last {rangeDays} days yet &mdash; log something on Nutrition, Sport, Sleep or Study to see it here.</p>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 24, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 18, marginBottom: 20 }}>
         <BarChart title="Sleep" unit="h" dates={dates} values={dates.map(d => Math.round((sleepMap[d] || 0) * 10) / 10)} formatValue={formatHM} />
         <BarChart title="Study minutes" unit="m" dates={dates} values={dates.map(d => studyMap[d] || 0)} />
         <BarChart title="Training minutes" unit="m" dates={dates} values={dates.map(d => workoutMap[d] || 0)} />

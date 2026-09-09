@@ -38,7 +38,7 @@ export default function IntroSplash({ name }) {
       style={{
         position: 'fixed', inset: 0, zIndex: 2000,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: 18, background: 'var(--bg)',
+        gap: 14, background: 'var(--bg)',
         opacity: phase === 'out' ? 0 : 1,
         transition: 'opacity 550ms ease',
         pointerEvents: phase === 'out' ? 'none' : 'auto',

@@ -56,9 +56,9 @@ export default function NutritionAsk() {
   if (!loaded || logs.length === 0) return null;
 
   return (
-    <div className="card" style={{ marginTop: 28 }}>
+    <div className="card" style={{ marginTop: 20 }}>
       <h3 style={{ marginBottom: 4 }}>Ask about your eating</h3>
-      <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 16 }}>
+      <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 13 }}>
         DailyAI answers using your recently logged meals &mdash; ask about patterns, gaps, or what to change.
       </p>
       <AskPanel

@@ -167,10 +167,10 @@ export default async function TodayPage() {
     <div>
       <h1 style={{ fontSize: 26, marginBottom: 6 }}>{greeting}, {firstName}</h1>
       <p style={{ color: 'var(--text-2)', marginBottom: summaryLine ? 4 : 24 }}>Here&rsquo;s today at a glance.</p>
-      {summaryLine && <p className="mono" style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 24 }}>{summaryLine}</p>}
+      {summaryLine && <p className="mono" style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 18 }}>{summaryLine}</p>}
 
-      <div className="card" style={{ marginBottom: 24, padding: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+      <div className="card" style={{ marginBottom: 18, padding: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em' }}>READINESS</span>
           <InfoTip>
             A rough sense of how your body and habits are doing, built from what you've already logged: how much you
@@ -180,7 +180,7 @@ export default async function TodayPage() {
             so the score fills in as you log more.
           </InfoTip>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', width: 176, height: 176, flexShrink: 0 }}>
             <svg width="176" height="176" viewBox="0 0 176 176" style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 45%, transparent))' }}>
               <circle cx="88" cy="88" r="78" fill="none" stroke="var(--border)" strokeWidth="10" />
@@ -193,7 +193,7 @@ export default async function TodayPage() {
               <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{readiness.label}</span>
             </div>
           </div>
-          <div style={{ flex: 1, minWidth: 280, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))', gap: 20 }}>
+          <div style={{ flex: 1, minWidth: 280, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))', gap: 16 }}>
             {readiness.components.map(c => (
               <div key={c.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
                 <div style={{ position: 'relative', width: 62, height: 62 }}>
@@ -213,7 +213,7 @@ export default async function TodayPage() {
         </div>
         {readinessTip && (
           <p style={{
-            marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)',
+            marginTop: 14, paddingTop: 13, borderTop: '1px solid var(--border)',
             fontSize: 13, color: 'var(--text-2)', fontStyle: 'italic', lineHeight: 1.5,
           }}>
             &ldquo;{readinessTip}&rdquo;
@@ -223,7 +223,7 @@ export default async function TodayPage() {
 
       {proactiveInsight && (
         <div className="card" style={{
-          marginBottom: 24, padding: '18px 24px', display: 'flex', gap: 14, alignItems: 'flex-start',
+          marginBottom: 18, padding: '18px 24px', display: 'flex', gap: 11, alignItems: 'flex-start',
           background: 'linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), color-mix(in srgb, var(--surface) 88%, transparent))',
           borderColor: 'color-mix(in srgb, var(--accent) 32%, var(--border))',
         }}>
@@ -275,7 +275,7 @@ export default async function TodayPage() {
       </div>
 
       {todaysMeals && (
-        <div className="card" style={{ marginTop: 16 }}>
+        <div className="card" style={{ marginTop: 13 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             <h3 style={{ margin: 0 }}>Today&rsquo;s meals</h3>
             <Link href={`/nutrition/planner?open=${todaysMeals.plan.id}`} style={{ fontSize: 12.5, flexShrink: 0 }}>View full plan &rarr;</Link>
@@ -296,7 +296,7 @@ export default async function TodayPage() {
       )}
 
       <DeadlinesCard />
-      <p style={{ marginTop: 24 }}><Link href="/log">See recent activity, or log something for today &rarr;</Link></p>
+      <p style={{ marginTop: 18 }}><Link href="/log">See recent activity, or log something for today &rarr;</Link></p>
     </div>
   );
 }

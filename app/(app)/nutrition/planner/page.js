@@ -11,7 +11,7 @@ export default async function MealPlannerPage({ searchParams }) {
   if (!hasBodyProfile(user)) {
     return (
       <div>
-        <h1 style={{ fontSize: 24, marginBottom: 16 }}>Meal planner</h1>
+        <h1 style={{ fontSize: 24, marginBottom: 13 }}>Meal planner</h1>
         <div className="card" style={{ textAlign: 'center', padding: '36px 28px' }}>
           <h3 style={{ marginBottom: 8 }}>Set up your daily targets first</h3>
           <p style={{ color: 'var(--text-2)', fontSize: 13.5, maxWidth: 380, margin: '0 auto 18px' }}>
@@ -28,7 +28,7 @@ export default async function MealPlannerPage({ searchParams }) {
 
   return (
     <div>
-      <p style={{ marginBottom: 20 }}><Link href="/nutrition">&larr; Back to Nutrition</Link></p>
+      <p style={{ marginBottom: 16 }}><Link href="/nutrition">&larr; Back to Nutrition</Link></p>
       <MealPlanner targets={targets} initialPlanId={openId} groceryStore={user.grocery_store || ''} kitchenTools={user.kitchen_tools || ''} />
     </div>
   );

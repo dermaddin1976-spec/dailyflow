@@ -65,10 +65,10 @@ function NoteEditor({ note, onSave, onDelete, onBack }) {
 
   return (
     <div>
-      <button className="btn secondary" onClick={onBack} style={{ marginBottom: 20 }}>&larr; Back to notes</button>
-      <div className="btn-row" style={{ justifyContent: 'space-between', marginBottom: 20 }}>
+      <button className="btn secondary" onClick={onBack} style={{ marginBottom: 16 }}>&larr; Back to notes</button>
+      <div className="btn-row" style={{ justifyContent: 'space-between', marginBottom: 16 }}>
         <h1 style={{ fontSize: 22, margin: 0, overflowWrap: 'break-word', minWidth: 0 }}>{note.source_title}</h1>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 11, flexShrink: 0 }}>
           {!editing && (
             <button type="button" className="btn secondary" onClick={startEdit} style={{ padding: '8px 16px', fontSize: 13 }}>Edit</button>
           )}
@@ -76,7 +76,7 @@ function NoteEditor({ note, onSave, onDelete, onBack }) {
         </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="card">
           <span className="mono" style={labelStyle}>Summary</span>
           {editing ? (
@@ -210,7 +210,7 @@ export default function StudyNotes() {
     if (!note) {
       return (
         <div>
-          <button className="btn secondary" onClick={() => setActiveNoteId(null)} style={{ marginBottom: 20 }}>&larr; Back to notes</button>
+          <button className="btn secondary" onClick={() => setActiveNoteId(null)} style={{ marginBottom: 16 }}>&larr; Back to notes</button>
           <p style={{ color: 'var(--muted)' }}>That note is gone.</p>
         </div>
       );
@@ -219,7 +219,7 @@ export default function StudyNotes() {
   }
 
   return (
-    <div style={{ marginTop: 40 }}>
+    <div style={{ marginTop: 28 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <h2 style={{ fontSize: 19, margin: 0 }}>Study notes</h2>
         <InfoTip>
@@ -230,12 +230,12 @@ export default function StudyNotes() {
           to it before you rely on it to study from.
         </InfoTip>
       </div>
-      <p style={{ color: 'var(--text-2)', marginBottom: 16, fontSize: 13.5 }}>
+      <p style={{ color: 'var(--text-2)', marginBottom: 13, fontSize: 13.5 }}>
         Different from flashcards above &mdash; this builds a study guide you read through, rather than cards you drill.
       </p>
 
-      <div className="card" style={{ marginBottom: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 24, alignItems: 'start' }}>
+      <div className="card" style={{ marginBottom: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 18, alignItems: 'start' }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 8 }}>From a document</label>
             <label className="btn wide" style={{ display: 'inline-block', textAlign: 'center' }}>
@@ -260,7 +260,7 @@ export default function StudyNotes() {
             </form>
           </div>
         </div>
-        {msg && <p style={{ marginTop: 16, fontSize: 13, color: msg.startsWith('Created') ? 'var(--good)' : 'var(--critical)' }}>{msg}</p>}
+        {msg && <p style={{ marginTop: 13, fontSize: 13, color: msg.startsWith('Created') ? 'var(--good)' : 'var(--critical)' }}>{msg}</p>}
         {uploading && (
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10 }}>
             Reading through the document and pulling out what matters — usually quick, a minute at most.
@@ -273,7 +273,7 @@ export default function StudyNotes() {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14 }}>
         {notes.length === 0 && (
           <div className="card" style={{ textAlign: 'center', padding: '40px 28px', border: '1px dashed var(--border-strong)', boxShadow: 'none', gridColumn: '1 / -1' }}>
             <h3 style={{ marginBottom: 8 }}>No notes yet</h3>
@@ -296,7 +296,7 @@ export default function StudyNotes() {
               </button>
             </div>
             <p style={{
-              color: 'var(--text-2)', fontSize: 12.5, marginBottom: 14, overflow: 'hidden',
+              color: 'var(--text-2)', fontSize: 12.5, marginBottom: 11, overflow: 'hidden',
               display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
             }}>
               {n.summary}

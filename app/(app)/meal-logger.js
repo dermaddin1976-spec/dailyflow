@@ -128,7 +128,7 @@ function MealRow({ item, onSave, onDelete }) {
                 onClick={() => setPhotoOpen(false)}
                 style={{
                   position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, cursor: 'zoom-out',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, cursor: 'zoom-out',
                 }}
               >
                 <img
@@ -401,7 +401,7 @@ export default function MealLogger() {
       </div>
 
       {cameraOpen ? (
-        <div style={{ marginTop: 14 }}>
+        <div style={{ marginTop: 11 }}>
           <video
             ref={videoRef}
             autoPlay
@@ -418,7 +418,7 @@ export default function MealLogger() {
           </div>
         </div>
       ) : scannerOpen ? (
-        <div style={{ marginTop: 14 }}>
+        <div style={{ marginTop: 11 }}>
           <video
             ref={scanVideoRef}
             autoPlay
@@ -430,7 +430,7 @@ export default function MealLogger() {
           <button type="button" className="btn secondary wide" style={{ marginTop: 2 }} onClick={closeScanner}>Cancel</button>
         </div>
       ) : describeOpen ? (
-        <div style={{ marginTop: 14 }}>
+        <div style={{ marginTop: 11 }}>
           <textarea
             value={describeText}
             onChange={e => setDescribeText(e.target.value)}
@@ -493,14 +493,14 @@ export default function MealLogger() {
         </div>
       </div>
       {photoDataUrl && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 11 }}>
           <img src={photoDataUrl} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)' }} />
           <button type="button" onClick={() => setPhotoDataUrl('')} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
             Remove photo
           </button>
         </div>
       )}
-      <button className="btn wide" style={{ marginTop: 18 }} type="submit">Save meal</button>
+      <button className="btn wide" style={{ marginTop: 14 }} type="submit">Save meal</button>
 
       <LogHistory
         items={items}

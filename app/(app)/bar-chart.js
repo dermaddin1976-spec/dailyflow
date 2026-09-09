@@ -22,7 +22,7 @@ export function BarChart({ title, unit, dates, values, formatValue }) {
 
   return (
     <div className="card">
-      <h3 style={{ marginBottom: 14 }}>{title}</h3>
+      <h3 style={{ marginBottom: 11 }}>{title}</h3>
       <svg width="100%" viewBox={`0 0 ${width} ${chartH + 26}`} style={{ overflow: 'visible' }}>
         {dates.map((date, i) => {
           const v = values[i] || 0;

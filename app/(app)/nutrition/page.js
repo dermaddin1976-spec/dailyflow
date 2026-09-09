@@ -58,7 +58,7 @@ export default async function NutritionPage() {
       </p>
 
       {!hasBodyProfile(user) ? (
-        <div className="card" style={{ marginBottom: 28, textAlign: 'center', padding: '36px 28px' }}>
+        <div className="card" style={{ marginBottom: 20, textAlign: 'center', padding: '36px 28px' }}>
           <h3 style={{ marginBottom: 8 }}>Set up your daily targets</h3>
           <p style={{ color: 'var(--text-2)', fontSize: 13.5, maxWidth: 380, margin: '0 auto 18px' }}>
             Add your age, weight, height, sex and activity level in Settings and DailyFlow will work out a personalized
@@ -67,15 +67,15 @@ export default async function NutritionPage() {
           <Link href="/settings" className="btn">Go to Settings</Link>
         </div>
       ) : (
-        <div className="card" style={{ marginBottom: 28, padding: 28 }}>
+        <div className="card" style={{ marginBottom: 20, padding: 20 }}>
           {targets.remainingKg != null && (
-            <p className="mono" style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>
+            <p className="mono" style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 13 }}>
               {targets.remainingKg <= 0
                 ? 'At your target weight — calories are set to maintain.'
                 : `${targets.remainingKg}kg to go${targets.weeksToGoal ? ` — about ${targets.weeksToGoal} week${targets.weeksToGoal === 1 ? '' : 's'} at this pace` : ''}.`}
             </p>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
             <MacroBar label="Calories" consumed={totals.calories} target={targets.calories} unit=" cal" />
             <MacroBar label="Protein" consumed={totals.protein} target={targets.protein} unit="g" />
             <MacroBar label="Carbs" consumed={totals.carbs} target={targets.carbs} unit="g" />

@@ -56,17 +56,17 @@ export default async function LogPage() {
           kind of entry to open the tab it lives on, where you can edit or delete it.
         </InfoTip>
       </div>
-      <p style={{ color: 'var(--text-2)', marginBottom: 20, fontSize: 13.5 }}>
+      <p style={{ color: 'var(--text-2)', marginBottom: 16, fontSize: 13.5 }}>
         Each area has its own logging tools built in &mdash; jump straight there, or scan what you've logged recently below.
       </p>
 
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 28 }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
         {SECTIONS.map(s => (
           <Link key={s.href} href={s.href} className="btn secondary" style={{ textDecoration: 'none' }}>{s.label}</Link>
         ))}
       </div>
 
-      <h2 style={{ fontSize: 17, marginBottom: 14 }}>Recent activity</h2>
+      <h2 style={{ fontSize: 17, marginBottom: 11 }}>Recent activity</h2>
       {rows.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '40px 28px', border: '1px dashed var(--border-strong)', boxShadow: 'none' }}>
           <h3 style={{ marginBottom: 8 }}>Nothing logged yet</h3>
@@ -84,7 +84,7 @@ export default async function LogPage() {
                 key={`${row.kind}-${row.id}`}
                 href={meta.href}
                 style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 11,
                   padding: '14px 20px', textDecoration: 'none', color: 'inherit',
                   borderTop: i === 0 ? 'none' : '1px solid var(--border)',
                 }}

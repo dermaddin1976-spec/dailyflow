@@ -245,7 +245,7 @@ export default function StudyWorkspace() {
             &times;
           </button>
         </div>
-        <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 16 }}>{cards.length} card{cards.length === 1 ? '' : 's'}</p>
+        <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 13 }}>{cards.length} card{cards.length === 1 ? '' : 's'}</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn wide" onClick={() => openDeck(title)}>Review</button>
           <button className="btn secondary wide" onClick={() => startQuiz(title)}>Quiz</button>
@@ -365,8 +365,8 @@ export default function StudyWorkspace() {
 
     return (
       <div>
-        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 20 }}>&larr; Back to decks</button>
-        <h1 style={{ fontSize: 22, marginBottom: 16 }}>{activeDeck} &mdash; Edit cards</h1>
+        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 16 }}>&larr; Back to decks</button>
+        <h1 style={{ fontSize: 22, marginBottom: 13 }}>{activeDeck} &mdash; Edit cards</h1>
 
         {currentCard ? (
           <div>
@@ -393,7 +393,7 @@ export default function StudyWorkspace() {
                 style={{ ...editFieldStyle, fontSize: 17, marginTop: 10, flex: 1 }}
               />
             </div>
-            <div className="btn-row" style={{ justifyContent: 'space-between', marginTop: 16 }}>
+            <div className="btn-row" style={{ justifyContent: 'space-between', marginTop: 13 }}>
               <button className="btn secondary" disabled={clampedIndex === 0} onClick={() => setManageIndex(i => i - 1)}>&larr; Previous</button>
               <button className="btn" onClick={saveCurrent}>{manageSavedFlash ? 'Saved' : 'Save changes'}</button>
               <button className="btn secondary" disabled={clampedIndex === cards.length - 1} onClick={() => setManageIndex(i => i + 1)}>Next &rarr;</button>
@@ -403,7 +403,7 @@ export default function StudyWorkspace() {
           <p style={{ color: 'var(--muted)' }}>No cards left in this deck.</p>
         )}
 
-        <div style={{ marginTop: 28 }}>
+        <div style={{ marginTop: 20 }}>
           <AddCardForm deckTitle={activeDeck} onAdd={addCard} />
         </div>
       </div>
@@ -416,8 +416,8 @@ export default function StudyWorkspace() {
 
     return (
       <div>
-        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 20 }}>&larr; Back to decks</button>
-        <h1 style={{ fontSize: 22, marginBottom: 16 }}>{activeDeck}</h1>
+        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 16 }}>&larr; Back to decks</button>
+        <h1 style={{ fontSize: 22, marginBottom: 13 }}>{activeDeck}</h1>
 
         {!finished ? (
           <div>
@@ -430,27 +430,27 @@ export default function StudyWorkspace() {
             {!revealed ? (
               <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12.5, marginTop: 10 }}>Click the card to reveal the answer</p>
             ) : (
-              <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+              <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
                 <button className="btn secondary wide" onClick={() => answer(false)}>Didn&rsquo;t know it</button>
                 <button className="btn wide" onClick={() => answer(true)}>Got it</button>
               </div>
             )}
-            <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12, marginTop: 16 }} className="mono">
+            <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12, marginTop: 13 }} className="mono">
               {index + 1} / {passCards.length}
             </p>
           </div>
         ) : missed.length === 0 ? (
-          <div className="card" style={{ textAlign: 'center', padding: 36 }}>
+          <div className="card" style={{ textAlign: 'center', padding: 26 }}>
             <p style={{ fontWeight: 600, marginBottom: 6 }}>You got every card. 🎉</p>
-            <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 18 }}>{fullDeckSize} card{fullDeckSize === 1 ? '' : 's'}, all correct.</p>
+            <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 14 }}>{fullDeckSize} card{fullDeckSize === 1 ? '' : 's'}, all correct.</p>
             <button className="btn secondary" onClick={() => startPass(decks[activeDeck])}>Go again</button>
           </div>
         ) : (
-          <div className="card" style={{ textAlign: 'center', padding: 36 }}>
+          <div className="card" style={{ textAlign: 'center', padding: 26 }}>
             <p style={{ fontWeight: 600, marginBottom: 6 }}>
               {passCards.length - missed.length} / {passCards.length} correct.
             </p>
-            <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 18 }}>
+            <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 14 }}>
               You missed {missed.length} card{missed.length === 1 ? '' : 's'} — go through just those?
             </p>
             <button className="btn wide" onClick={() => startPass(missed)}>Review the {missed.length} you missed</button>
@@ -469,8 +469,8 @@ export default function StudyWorkspace() {
 
     return (
       <div>
-        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 20 }}>&larr; Back to decks</button>
-        <h1 style={{ fontSize: 22, marginBottom: 16 }}>{activeDeck} &mdash; Ask about this</h1>
+        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 16 }}>&larr; Back to decks</button>
+        <h1 style={{ fontSize: 22, marginBottom: 13 }}>{activeDeck} &mdash; Ask about this</h1>
         <AskPanel
           context={context}
           placeholder={`Ask anything about the "${activeDeck}" deck \u2014 DailyAI will answer using these cards.`}
@@ -496,8 +496,8 @@ export default function StudyWorkspace() {
 
     return (
       <div>
-        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 20 }}>&larr; Back to decks</button>
-        <h1 style={{ fontSize: 22, marginBottom: 16 }}>{activeDeck} &mdash; Ask this notebook</h1>
+        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 16 }}>&larr; Back to decks</button>
+        <h1 style={{ fontSize: 22, marginBottom: 13 }}>{activeDeck} &mdash; Ask this notebook</h1>
         <AskPanel
           context={context}
           placeholder={`Ask anything across the "${activeDeck}" notebook \u2014 DailyAI will use every deck and source summary in it.`}
@@ -514,11 +514,11 @@ export default function StudyWorkspace() {
 
     return (
       <div>
-        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 20 }}>&larr; Back to decks</button>
-        <h1 style={{ fontSize: 22, marginBottom: 16 }}>{activeDeck} &mdash; Quiz</h1>
+        <button className="btn secondary" onClick={backToDecks} style={{ marginBottom: 16 }}>&larr; Back to decks</button>
+        <h1 style={{ fontSize: 22, marginBottom: 13 }}>{activeDeck} &mdash; Quiz</h1>
 
         {quizLoading && (
-          <div className="card" style={{ textAlign: 'center', padding: 36 }}>
+          <div className="card" style={{ textAlign: 'center', padding: 26 }}>
             <p><span className="spinner" />Generating quiz questions&hellip;</p>
           </div>
         )}
@@ -530,7 +530,7 @@ export default function StudyWorkspace() {
             <p className="mono" style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 10 }}>
               Question {quizIndex + 1} / {quizQuestions.length}
             </p>
-            <div className="card" style={{ marginBottom: 18, fontSize: 17 }}>{q.question}</div>
+            <div className="card" style={{ marginBottom: 14, fontSize: 17 }}>{q.question}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {q.options.map((opt, i) => {
                 let bg = 'var(--surface)';
@@ -557,7 +557,7 @@ export default function StudyWorkspace() {
               })}
             </div>
             {selected !== null && (
-              <button className="btn wide" style={{ marginTop: 20 }} onClick={nextQuestion}>
+              <button className="btn wide" style={{ marginTop: 16 }} onClick={nextQuestion}>
                 {quizIndex + 1 === quizQuestions.length ? 'See results' : 'Next question'}
               </button>
             )}
@@ -565,9 +565,9 @@ export default function StudyWorkspace() {
         )}
 
         {!quizLoading && !quizMsg && finished && (
-          <div className="card" style={{ textAlign: 'center', padding: 36 }}>
+          <div className="card" style={{ textAlign: 'center', padding: 26 }}>
             <p style={{ fontWeight: 700, fontSize: 22, marginBottom: 6 }}>{quizScore} / {quizQuestions.length}</p>
-            <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 20 }}>
+            <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 16 }}>
               {quizScore === quizQuestions.length ? 'Perfect score.' : 'Not bad — try again or get a fresh set of questions.'}
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -593,10 +593,10 @@ export default function StudyWorkspace() {
           rather than just testing yourself on it.
         </InfoTip>
       </div>
-      <p style={{ color: 'var(--text-2)', marginBottom: 20, fontSize: 13.5 }}>Upload a PDF of your notes to get flashcards generated automatically, then quiz yourself on any deck with DailyAI-generated multiple-choice questions.</p>
+      <p style={{ color: 'var(--text-2)', marginBottom: 16, fontSize: 13.5 }}>Upload a PDF of your notes to get flashcards generated automatically, then quiz yourself on any deck with DailyAI-generated multiple-choice questions.</p>
 
-      <div className="card" style={{ marginBottom: 28 }}>
-        <div style={{ marginBottom: 20 }}>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 16 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 8 }}>
             Notebook <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(optional &mdash; group related sources so you can ask across all of them at once)</span>
           </label>
@@ -612,7 +612,7 @@ export default function StudyWorkspace() {
             {Object.keys(notebooks).map(name => <option key={name} value={name} />)}
           </datalist>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 24, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 18, alignItems: 'start' }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 8 }}>From a document</label>
             <label className="btn wide" style={{ display: 'inline-block', textAlign: 'center' }}>
@@ -637,7 +637,7 @@ export default function StudyWorkspace() {
             </form>
           </div>
         </div>
-        {msg && <p style={{ marginTop: 16, fontSize: 13, color: msg.startsWith('Created') ? 'var(--good)' : 'var(--critical)' }}>{msg}</p>}
+        {msg && <p style={{ marginTop: 13, fontSize: 13, color: msg.startsWith('Created') ? 'var(--good)' : 'var(--critical)' }}>{msg}</p>}
         {uploading && (
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10 }}>
             Reading through your notes and building flashcards — this is usually quick, a minute at most.
@@ -650,7 +650,7 @@ export default function StudyWorkspace() {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14 }}>
         {Object.keys(decks).length === 0 && (
           <div className="card" style={{ textAlign: 'center', padding: '48px 28px', border: '1px dashed var(--border-strong)', boxShadow: 'none', gridColumn: '1 / -1' }}>
             <h3 style={{ marginBottom: 8 }}>No decks yet</h3>
@@ -678,7 +678,7 @@ export default function StudyWorkspace() {
                   &#128172; Ask this notebook
                 </button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 18, marginBottom: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14, marginBottom: 8 }}>
                 {titles.map(title => renderDeckCard(title, decks[title] || []))}
               </div>
             </div>

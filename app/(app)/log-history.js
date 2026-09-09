@@ -21,7 +21,7 @@ export default function LogHistory({ items, renderItem, summarize, emptyText }) 
   const [openDates, setOpenDates] = useState(() => new Set());
 
   if (!items || items.length === 0) {
-    return <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 16 }}>{emptyText || 'Nothing logged yet.'}</p>;
+    return <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 13 }}>{emptyText || 'Nothing logged yet.'}</p>;
   }
 
   const groups = [];
@@ -47,7 +47,7 @@ export default function LogHistory({ items, renderItem, summarize, emptyText }) 
   }
 
   return (
-    <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 4, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ marginTop: 13, borderTop: '1px solid var(--border)', paddingTop: 4, display: 'flex', flexDirection: 'column' }}>
       {groups.map(group => {
         const isOpen = group.date === today || openDates.has(group.date);
         return (

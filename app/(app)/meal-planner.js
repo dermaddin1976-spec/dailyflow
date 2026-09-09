@@ -59,7 +59,7 @@ function Bubble({ children }) {
   return (
     <div style={{
       background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-      padding: '16px 18px', fontSize: 14.5, lineHeight: 1.5, marginBottom: 18,
+      padding: '16px 18px', fontSize: 14.5, lineHeight: 1.5, marginBottom: 14,
     }}>
       {children}
     </div>
@@ -169,7 +169,7 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
       ? 'Finding something quick to grab…'
       : `Building your ${answers.days}-day plan and shopping list…`;
     return (
-      <div className="card" style={{ textAlign: 'center', padding: 48 }}>
+      <div className="card" style={{ textAlign: 'center', padding: 34 }}>
         <p><span className="spinner" />{loadingText}</p>
         <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 8 }}>
           {answers.scope === 'plan' ? 'This can take a minute or two for a full week.' : 'This should just take a few seconds.'}
@@ -180,7 +180,7 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
 
   return (
     <div className="card" style={{ maxWidth: 560 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <p className="mono" style={{ fontSize: 11.5, color: 'var(--muted)', margin: 0 }}>Question {step + 1} of {stepCount}</p>
         <button type="button" onClick={onCancel} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12.5, cursor: 'pointer' }}>Cancel</button>
       </div>
@@ -200,7 +200,7 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
       {stepKey === 'store' && (
         <div>
           <Bubble>Which stores do you shop at? Tap all that apply &mdash; this keeps ingredients realistic. Optional.</Bubble>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}>
             {GROCERY_STORE_OPTIONS.map(opt => (
               <ChoicePill key={opt} active={answers.groceryStores.includes(opt)} onClick={() => toggleStore(opt)}>{opt}</ChoicePill>
             ))}
@@ -213,14 +213,14 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
         <div>
           <Bubble>What kitchen tools do you have? Tap an appliance in the picture &mdash; recipes will stick to what you can actually use. Optional.</Bubble>
           <KitchenPicker selected={answers.kitchenToolsList} onToggle={toggleTool} />
-          <input value={answers.kitchenToolsOther} onChange={e => update({ kitchenToolsOther: e.target.value })} placeholder="Something else not pictured? (optional)" style={{ ...inputStyle, marginTop: 14 }} />
+          <input value={answers.kitchenToolsOther} onChange={e => update({ kitchenToolsOther: e.target.value })} placeholder="Something else not pictured? (optional)" style={{ ...inputStyle, marginTop: 11 }} />
         </div>
       )}
 
       {stepKey === 'grabStore' && (
         <div>
           <Bubble>Which store are you at or heading to right now?</Bubble>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}>
             {GROCERY_STORE_OPTIONS.map(opt => (
               <ChoicePill key={opt} active={answers.grabStore === opt} onClick={() => update({ grabStore: opt })}>{opt}</ChoicePill>
             ))}
@@ -257,7 +257,7 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
       {stepKey === 'meals' && (
         <div>
           <Bubble>How many meals per day &mdash; not counting snacks?</Bubble>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}>
             {[2, 3, 4].map(n => <ChoicePill key={n} active={answers.mealsPerDay === n} onClick={() => update({ mealsPerDay: n })}>{n} meals</ChoicePill>)}
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--text-2)' }}>
@@ -270,7 +270,7 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
       {stepKey === 'diet' && (
         <div>
           <Bubble>Any dietary style I should plan around?</Bubble>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}>
             {DIET_OPTIONS.map(opt => <ChoicePill key={opt} active={answers.diet.includes(opt)} onClick={() => toggleDiet(opt)}>{opt}</ChoicePill>)}
           </div>
           <input value={answers.dietOther} onChange={e => update({ dietOther: e.target.value })} placeholder="Anything else? (optional)" style={inputStyle} />
@@ -328,7 +328,7 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
               : 'Any side note for this one? Optional — e.g. just finished a workout and want a high-protein recovery bite, or you’re short on time.'}
           </Bubble>
           {answers.scope !== 'plan' && (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}>
               {CONTEXT_OPTIONS.map(c => (
                 <ChoicePill key={c} active={answers.context === c} onClick={() => setContext(c)}>{c}</ChoicePill>
               ))}
@@ -346,7 +346,7 @@ function Wizard({ onCancel, onComplete, groceryStore, kitchenTools }) {
 
       {error && <p className="error-text" style={{ marginTop: 12 }}>{error}</p>}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 18 }}>
         <button type="button" className="btn secondary" onClick={back} disabled={step === 0}>&larr; Back</button>
         {step < stepCount - 1 ? (
           <button type="button" className="btn" onClick={next}>Next &rarr;</button>
@@ -402,9 +402,9 @@ function ReviseSection({ planId, currency, onApplied }) {
   }
 
   return (
-    <div style={{ marginTop: 32 }}>
+    <div style={{ marginTop: 24 }}>
       <h2 style={{ fontSize: 17, marginBottom: 6 }}>Revise this plan</h2>
-      <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 14 }}>
+      <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 11 }}>
         Describe a change and DailyAI rebuilds the plan around it &mdash; nothing is saved until you approve it below.
       </p>
       <form onSubmit={generatePreview} className="card" style={{ boxShadow: 'none', border: '1px dashed var(--border-strong)' }}>
@@ -426,7 +426,7 @@ function ReviseSection({ planId, currency, onApplied }) {
       </form>
 
       {preview && (
-        <div className="card" style={{ marginTop: 16, borderLeft: '3px solid var(--accent)' }}>
+        <div className="card" style={{ marginTop: 13, borderLeft: '3px solid var(--accent)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
             <span className="mono" style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6 }}>Preview</span>
             <span className="mono" style={{ fontSize: 13, color: 'var(--text-2)' }}>
@@ -434,7 +434,7 @@ function ReviseSection({ planId, currency, onApplied }) {
             </span>
           </div>
           {preview.notes && <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 8 }}>{preview.notes}</p>}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 11 }}>
             {(preview.days || []).map((d, di) => (
               <details key={di} className="card" style={{ padding: 0, background: 'var(--surface-2)' }} open={di === 0}>
                 <summary style={{ padding: '12px 16px', cursor: 'pointer', fontWeight: 600, fontSize: 13.5 }}>{d.day}</summary>
@@ -450,7 +450,7 @@ function ReviseSection({ planId, currency, onApplied }) {
               </details>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 10, marginTop: 13 }}>
             <button className="btn secondary" onClick={() => setPreview(null)} disabled={applying}>Discard</button>
             <button className="btn" onClick={apply} disabled={applying}>{applying ? 'Applying…' : 'Apply this plan'}</button>
           </div>
@@ -526,7 +526,7 @@ function PlanDetail({ planId, onBack, onDeleted }) {
   if (!plan) {
     return (
       <div>
-        <button className="btn secondary" onClick={onBack} style={{ marginBottom: 20 }}>&larr; Back to plans</button>
+        <button className="btn secondary" onClick={onBack} style={{ marginBottom: 16 }}>&larr; Back to plans</button>
         <p style={{ color: 'var(--muted)' }}>That plan is gone.</p>
       </div>
     );
@@ -544,8 +544,8 @@ function PlanDetail({ planId, onBack, onDeleted }) {
 
   return (
     <div>
-      <button className="btn secondary" onClick={onBack} style={{ marginBottom: 20 }}>&larr; Back to plans</button>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+      <button className="btn secondary" onClick={onBack} style={{ marginBottom: 16 }}>&larr; Back to plans</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 13, flexWrap: 'wrap' }}>
         <h1 style={{ fontSize: 22, margin: 0 }}>{plan.title}</h1>
         <div className="btn-row" style={{ alignItems: 'center' }}>
           <button className="btn secondary" onClick={regenerate} disabled={regenerating}>
@@ -556,7 +556,7 @@ function PlanDetail({ planId, onBack, onDeleted }) {
       </div>
       {msg && <p className="error-text">{msg}</p>}
 
-      <div className="card" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+      <div className="card" style={{ marginBottom: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontSize: 11.5, color: 'var(--muted)', letterSpacing: '.03em' }}>ESTIMATED COST</div>
           <div className="mono" style={{ fontSize: 24, fontWeight: 700, marginTop: 2, color: budgetColor(plan.total_est_cost, budgetAmount) }}>
@@ -574,13 +574,13 @@ function PlanDetail({ planId, onBack, onDeleted }) {
       </div>
 
       {plan.notes && (
-        <div className="card" style={{ marginBottom: 24, background: 'var(--surface-2)', boxShadow: 'none' }}>
+        <div className="card" style={{ marginBottom: 18, background: 'var(--surface-2)', boxShadow: 'none' }}>
           <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0 }}>{plan.notes}</p>
         </div>
       )}
 
-      <h2 style={{ fontSize: 17, marginBottom: 14 }}>Meals</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 32 }}>
+      <h2 style={{ fontSize: 17, marginBottom: 11 }}>Meals</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 13, marginBottom: 24 }}>
         {(plan.days || []).map((d, di) => (
           <details key={di} className="card" style={{ padding: 0 }} open={di === 0}>
             <summary style={{ padding: '16px 20px', cursor: 'pointer', fontWeight: 600 }}>{d.day}</summary>
@@ -624,8 +624,8 @@ function PlanDetail({ planId, onBack, onDeleted }) {
         ))}
       </div>
 
-      <h2 style={{ fontSize: 17, marginBottom: 14 }}>Shopping list</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <h2 style={{ fontSize: 17, marginBottom: 11 }}>Shopping list</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {Object.entries(grouped).map(([category, items]) => (
           <div key={category} className="card">
             <h3 style={{ fontSize: 14, marginBottom: 10 }}>{category}</h3>
@@ -649,9 +649,9 @@ function PlanDetail({ planId, onBack, onDeleted }) {
       </div>
       <p style={{ color: 'var(--muted)', fontSize: 11.5, marginTop: 12 }}>Checkboxes here aren&rsquo;t saved &mdash; they reset if you leave and come back.</p>
 
-      <div style={{ marginTop: 32 }}>
+      <div style={{ marginTop: 24 }}>
         <h2 style={{ fontSize: 17, marginBottom: 6 }}>Ask about this plan</h2>
-        <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 14 }}>
+        <p style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 11 }}>
           For questions only &mdash; it can't change your plan. To actually change it, use Revise below.
         </p>
         <AskPanel
@@ -696,7 +696,7 @@ function RecipeCard({ recipe, onDelete }) {
       </p>
       {ingredients.length > 0 && (
         <>
-          <button type="button" className="btn secondary wide" style={{ marginTop: 14 }} onClick={() => setOpen(o => !o)}>
+          <button type="button" className="btn secondary wide" style={{ marginTop: 11 }} onClick={() => setOpen(o => !o)}>
             {open ? 'Hide ingredients' : `Show ingredients (${ingredients.length})`}
           </button>
           {open && (
@@ -733,9 +733,9 @@ function RecipeBook({ onBack }) {
 
   return (
     <div>
-      <button className="btn secondary" onClick={onBack} style={{ marginBottom: 20 }}>&larr; Back to plans</button>
+      <button className="btn secondary" onClick={onBack} style={{ marginBottom: 16 }}>&larr; Back to plans</button>
       <h2 style={{ fontSize: 19, marginBottom: 4 }}>Recipe book</h2>
-      <p style={{ color: 'var(--text-2)', fontSize: 13.5, marginBottom: 18 }}>
+      <p style={{ color: 'var(--text-2)', fontSize: 13.5, marginBottom: 14 }}>
         Meals and snacks you&rsquo;ve saved from past plans &mdash; no need to regenerate a favorite from scratch.
       </p>
       {loading ? (
@@ -748,7 +748,7 @@ function RecipeBook({ onBack }) {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14 }}>
           {recipes.map(r => <RecipeCard key={r.id} recipe={r} onDelete={deleteRecipe} />)}
         </div>
       )}
@@ -790,7 +790,7 @@ export default function MealPlanner({ targets, initialPlanId, groceryStore, kitc
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <h2 style={{ fontSize: 19, margin: 0 }}>Meal planner</h2>
@@ -821,7 +821,7 @@ export default function MealPlanner({ targets, initialPlanId, groceryStore, kitc
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14 }}>
           {plans.map(p => (
             <div key={p.id} className="card" style={{ border: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -836,7 +836,7 @@ export default function MealPlanner({ targets, initialPlanId, groceryStore, kitc
               </div>
               <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginBottom: 4 }}>{p.budget}</p>
               {p.total_est_cost != null && (
-                <p className="mono" style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 14 }}>
+                <p className="mono" style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 11 }}>
                   {currencySymbol(p.currency)}{Number(p.total_est_cost).toFixed(2)} estimated
                 </p>
               )}

@@ -165,7 +165,7 @@ export default function SleepLogger() {
         {savedFlash && <span style={{ color: 'var(--good)', fontSize: 13, fontWeight: 600 }}>{savedFlash}</span>}
       </div>
 
-      <label className="btn secondary wide" style={{ display: 'inline-block', textAlign: 'center', marginTop: 14 }}>
+      <label className="btn secondary wide" style={{ display: 'inline-block', textAlign: 'center', marginTop: 11 }}>
         {estimating ? (<><span className="spinner" />Reading screenshots…</>) : 'Upload sleep screenshot(s)'}
         <input type="file" accept="image/*" multiple onChange={handleScreenshots} disabled={estimating} style={{ display: 'none' }} />
       </label>
@@ -184,7 +184,7 @@ export default function SleepLogger() {
         <label>Notes (optional)</label>
         <input value={note} onChange={e => setNote(e.target.value)} placeholder="Stages, RHR, bedtime..." />
       </div>
-      <button className="btn wide" style={{ marginTop: 18 }} type="submit">Save night</button>
+      <button className="btn wide" style={{ marginTop: 14 }} type="submit">Save night</button>
 
       <LogHistory
         items={items}

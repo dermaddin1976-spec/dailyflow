@@ -10,7 +10,7 @@ export default async function SettingsPage({ searchParams }) {
   const gcalStatus = sp && sp.gcal ? sp.gcal : null;
   return (
     <div>
-      <h1 style={{ fontSize: 24, marginBottom: 20 }}>Settings</h1>
+      <h1 style={{ fontSize: 24, marginBottom: 16 }}>Settings</h1>
       <ProfileForm user={user} />
       <BodyForm user={user} />
       <WeightCard initialWeightKg={user.weight_kg} />

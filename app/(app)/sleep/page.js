@@ -42,13 +42,13 @@ export default async function SleepPage() {
           sleep debt card further down.
         </InfoTip>
       </div>
-      <p style={{ color: 'var(--text-2)', marginBottom: 24 }}>This week&rsquo;s sleep.</p>
+      <p style={{ color: 'var(--text-2)', marginBottom: 18 }}>This week&rsquo;s sleep.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 24, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 18, marginBottom: 20 }}>
         <BarChart title="Hours per night" unit="h" dates={dates} values={dates.map(d => dailyMap[d] || 0)} formatValue={formatHM} />
 
         <div className="card">
-          <h3 style={{ marginBottom: 14 }}>This week</h3>
+          <h3 style={{ marginBottom: 11 }}>This week</h3>
           <div className="mini-stats">
             <div>
               <div style={{ fontSize: 11.5, color: 'var(--muted)', letterSpacing: '.03em' }}>AVG HOURS</div>
@@ -70,8 +70,8 @@ export default async function SleepPage() {
         </div>
       </div>
 
-      <div className="card" style={{ marginBottom: 28 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 13, flexWrap: 'wrap' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <h3 style={{ margin: 0 }}>Sleep debt</h3>
@@ -96,7 +96,7 @@ export default async function SleepPage() {
           </div>
         </div>
         {!user.age && (
-          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 14 }}>
+          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 11 }}>
             Using a default 8h target. <Link href="/settings">Add your age in Settings</Link> for one based on you.
           </p>
         )}
