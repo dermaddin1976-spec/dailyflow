@@ -6,10 +6,15 @@ export async function PATCH(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id } = await params;
-  const { type, minutes, intensity, note } = await request.json();
+  const { type, date, minutes, intensity, note } = await request.json();
   if (!type || !(minutes > 0)) return NextResponse.json({ error: 'Type and minutes are required.' }, { status: 400 });
-  await db.prepare('UPDATE workout_logs SET type=?, minutes=?, intensity=?, note=? WHERE id=? AND user_id=?')
-    .run(type, minutes, intensity || null, note || null, id, user.id);
+  if (date) {
+    await db.prepare('UPDATE workout_logs SET type=?, minutes=?, intensity=?, note=?, date=? WHERE id=? AND user_id=?')
+      .run(type, minutes, intensity || null, note || null, date, id, user.id);
+  } else {
+    await db.prepare('UPDATE workout_logs SET type=?, minutes=?, intensity=?, note=? WHERE id=? AND user_id=?')
+      .run(type, minutes, intensity || null, note || null, id, user.id);
+  }
   return NextResponse.json({ ok: true });
 }
 

@@ -56,6 +56,7 @@ const miniFieldStyle = {
 function WorkoutRow({ item, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [type, setType] = useState(item.type);
+  const [date, setDate] = useState(item.date);
   const [minutes, setMinutes] = useState(item.minutes ?? '');
   const [intensity, setIntensity] = useState(item.intensity ?? '');
   const [note, setNote] = useState(item.note ?? '');
@@ -63,13 +64,13 @@ function WorkoutRow({ item, onSave, onDelete }) {
 
   async function save() {
     setSaving(true);
-    await onSave(item.id, { type, minutes, intensity, note });
+    await onSave(item.id, { type, date, minutes, intensity, note });
     setSaving(false);
     setEditing(false);
   }
 
   function cancel() {
-    setType(item.type); setMinutes(item.minutes ?? ''); setIntensity(item.intensity ?? ''); setNote(item.note ?? '');
+    setType(item.type); setDate(item.date); setMinutes(item.minutes ?? ''); setIntensity(item.intensity ?? ''); setNote(item.note ?? '');
     setEditing(false);
   }
 
@@ -78,7 +79,10 @@ function WorkoutRow({ item, onSave, onDelete }) {
       <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: 10, background: 'var(--surface-2)' }}>
         <input value={type} onChange={e => setType(e.target.value)} style={{ ...miniFieldStyle, marginBottom: 6 }} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 6 }}>
+          <input type="date" max={todayStr()} value={date} onChange={e => setDate(e.target.value)} style={miniFieldStyle} />
           <input type="number" min="1" placeholder="minutes" value={minutes} onChange={e => setMinutes(e.target.value)} style={miniFieldStyle} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 6 }}>
           <input type="number" min="1" max="5" placeholder="intensity" value={intensity} onChange={e => setIntensity(e.target.value)} style={miniFieldStyle} />
         </div>
         <input value={note} onChange={e => setNote(e.target.value)} placeholder="Notes (distance, pace, HR...)" style={miniFieldStyle} />
@@ -134,6 +138,7 @@ export default function SessionLogger() {
   const router = useRouter();
   const [typeChoice, setTypeChoice] = useState('Run');
   const [customType, setCustomType] = useState('');
+  const [date, setDate] = useState(todayStr());
   const [minutes, setMinutes] = useState('');
   const [intensity, setIntensity] = useState(3);
   const [note, setNote] = useState('');
@@ -157,11 +162,11 @@ export default function SessionLogger() {
     if (!type) { setMsg('Enter a workout type.'); return; }
     const res = await fetch('/api/logs/workout', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: todayStr(), type, minutes: parseInt(minutes, 10), intensity: Number(intensity), note: note || null }),
+      body: JSON.stringify({ date, type, minutes: parseInt(minutes, 10), intensity: Number(intensity), note: note || null }),
     });
     const data = await res.json();
     if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
-    setMinutes(''); setCustomType(''); setNote(''); setEstimateMsg('');
+    setMinutes(''); setCustomType(''); setNote(''); setEstimateMsg(''); setDate(todayStr());
     setSavedFlash('Saved.');
     setTimeout(() => setSavedFlash(''), 1500);
     refresh();
@@ -200,6 +205,7 @@ export default function SessionLogger() {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: fields.type,
+        date: fields.date,
         minutes: parseInt(fields.minutes, 10) || 0,
         intensity: parseInt(fields.intensity, 10) || null,
         note: fields.note || null,
@@ -264,6 +270,10 @@ export default function SessionLogger() {
           <input value={customType} onChange={e => setCustomType(e.target.value)} placeholder="Climbing, hiking..." required />
         </div>
       )}
+      <div className="field">
+        <label>Date</label>
+        <input type="date" max={todayStr()} value={date} onChange={e => setDate(e.target.value)} required />
+      </div>
       <div className="field">
         <label>Minutes</label>
         <input type="number" min="1" value={minutes} onChange={e => setMinutes(e.target.value)} required />
