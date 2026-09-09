@@ -7,6 +7,7 @@ import { recommendedSleepHours, computeSleepDebt, formatHM } from '../../../lib/
 import { computeStreak } from '../../../lib/streak.js';
 import { getReadinessTip } from '../../../lib/readinessTip.js';
 import { buildCoachContext } from '../../../lib/coachContext.js';
+import { getProactiveInsight } from '../../../lib/insight.js';
 import TodayCoach from '../today-coach.js';
 import { lastNDates } from '../bar-chart.js';
 
@@ -119,15 +120,16 @@ export default async function TodayPage() {
     db.prepare('SELECT * FROM meal_plans WHERE user_id=? ORDER BY id DESC LIMIT 1').get(user.id),
   ]);
 
-  // Depends on the readiness result above, so this runs after the batch
-  // rather than inside it — cached after the first view each day, so this
-  // only costs real latency once daily per user.
-  const readinessTip = await getReadinessTip(user.id, date, readiness);
-
-  // Depends on readiness too — builds the week-wide picture the overall
-  // Today-tab coach reasons over (sleep, training, meals, study all
-  // together), separate from the single-tab tip above.
-  const coachContext = await buildCoachContext(user.id, user, readiness);
+  // readinessTip and coachContext depend on the readiness result above, so
+  // they run after that batch rather than inside it; insight doesn't need
+  // readiness at all. None of the three depend on each other, and each is
+  // its own cached-per-day AI call, so run them together instead of one
+  // after another.
+  const [readinessTip, coachContext, proactiveInsight] = await Promise.all([
+    getReadinessTip(user.id, date, readiness),
+    buildCoachContext(user.id, user, readiness),
+    getProactiveInsight(user.id, user, date),
+  ]);
 
   const allWorkoutDates = allWorkoutDateRows.map(r => r.date);
   const streak = computeStreak(allWorkoutDates);
@@ -218,6 +220,29 @@ export default async function TodayPage() {
           </p>
         )}
       </div>
+
+      {proactiveInsight && (
+        <div className="card" style={{
+          marginBottom: 24, padding: '18px 24px', display: 'flex', gap: 14, alignItems: 'flex-start',
+          background: 'linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), color-mix(in srgb, var(--surface) 88%, transparent))',
+          borderColor: 'color-mix(in srgb, var(--accent) 32%, var(--border))',
+        }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: '50%', flexShrink: 0, marginTop: 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'color-mix(in srgb, var(--accent) 22%, transparent)',
+            boxShadow: '0 0 16px color-mix(in srgb, var(--accent) 45%, transparent)',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em', marginBottom: 4 }}>PATTERN NOTICED</div>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>{proactiveInsight}</p>
+          </div>
+        </div>
+      )}
 
       <TodayCoach context={coachContext} />
 
