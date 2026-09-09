@@ -1,8 +1,7 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import InfoTip from './info-tip.js';
-import LogHistory from './log-history.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -54,105 +53,10 @@ function resizeForStorage(base64, mimeType, maxWidth = 480, quality = 0.6) {
   });
 }
 
-const miniFieldStyle = {
-  border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
-  background: 'var(--surface)', color: 'var(--text)', padding: '6px 8px',
-  fontSize: 12.5, fontFamily: 'inherit', width: '100%',
-};
-
-function MealRow({ item, onSave, onDelete }) {
-  const [editing, setEditing] = useState(false);
-  const [photoOpen, setPhotoOpen] = useState(false);
-  const [description, setDescription] = useState(item.description);
-  const [calories, setCalories] = useState(item.calories ?? '');
-  const [protein, setProtein] = useState(item.protein ?? '');
-  const [carbs, setCarbs] = useState(item.carbs ?? '');
-  const [fat, setFat] = useState(item.fat ?? '');
-  const [saving, setSaving] = useState(false);
-
-  async function save() {
-    setSaving(true);
-    await onSave(item.id, { description, calories, protein, carbs, fat });
-    setSaving(false);
-    setEditing(false);
-  }
-
-  function cancel() {
-    setDescription(item.description);
-    setCalories(item.calories ?? '');
-    setProtein(item.protein ?? '');
-    setCarbs(item.carbs ?? '');
-    setFat(item.fat ?? '');
-    setEditing(false);
-  }
-
-  if (editing) {
-    return (
-      <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: 10, background: 'var(--surface-2)' }}>
-        <input value={description} onChange={e => setDescription(e.target.value)} style={{ ...miniFieldStyle, marginBottom: 6 }} />
-        <div className="edit-fields-4">
-          <input type="number" min="0" placeholder="cal" value={calories} onChange={e => setCalories(e.target.value)} style={miniFieldStyle} />
-          <input type="number" min="0" placeholder="protein" value={protein} onChange={e => setProtein(e.target.value)} style={miniFieldStyle} />
-          <input type="number" min="0" placeholder="carbs" value={carbs} onChange={e => setCarbs(e.target.value)} style={miniFieldStyle} />
-          <input type="number" min="0" placeholder="fat" value={fat} onChange={e => setFat(e.target.value)} style={miniFieldStyle} />
-        </div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-          <button type="button" className="btn secondary" style={{ fontSize: 12, padding: '6px 10px' }} onClick={cancel}>Cancel</button>
-          <button type="button" className="btn" style={{ fontSize: 12, padding: '6px 10px' }} onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="meal-row">
-      <span style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', minWidth: 0 }}>
-        {item.photo_data_url && (
-          <>
-            <button
-              type="button"
-              onClick={() => setPhotoOpen(true)}
-              aria-label="View photo"
-              style={{ flexShrink: 0, lineHeight: 0, background: 'none', border: 'none', padding: 0, cursor: 'zoom-in' }}
-            >
-              <img
-                src={item.photo_data_url} alt=""
-                style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-strong)', display: 'block' }}
-              />
-            </button>
-            {photoOpen && (
-              // A full data: URL is too long/blocked for a browser tab navigation
-              // (Chrome refuses top-level navigation to data: URLs), so the
-              // full-size photo opens in an in-page overlay instead.
-              <div
-                onClick={() => setPhotoOpen(false)}
-                style={{
-                  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, cursor: 'zoom-out',
-                }}
-              >
-                <img
-                  src={item.photo_data_url} alt=""
-                  style={{ maxWidth: '92vw', maxHeight: '92vh', borderRadius: 10, boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
-                />
-              </div>
-            )}
-          </>
-        )}
-        <span style={{ color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</span>
-      </span>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <span className="mono" style={{ color: 'var(--muted)', fontSize: 11.5 }}>
-          {[item.calories && `${item.calories} cal`, item.protein && `${item.protein}p`, item.carbs && `${item.carbs}c`, item.fat && `${item.fat}f`].filter(Boolean).join(' · ') || '—'}
-        </span>
-        <button type="button" onClick={() => setEditing(true)} aria-label="Edit meal" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0 }}>&#9998;</button>
-        <button type="button" onClick={() => onDelete(item.id)} aria-label="Delete meal" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 15, cursor: 'pointer', padding: 0 }}>&times;</button>
-      </span>
-    </div>
-  );
-}
-
-export default function MealLogger() {
+// The logging form only — what you've already logged is shown once, by the
+// day picker above this (NutritionDayPicker, wired up in nutrition-client.js),
+// which also handles editing and deleting.
+export default function MealLogger({ onLogged }) {
   const router = useRouter();
   const [description, setDescription] = useState('');
   const [calories, setCalories] = useState('');
@@ -164,7 +68,6 @@ export default function MealLogger() {
   const [photoDataUrl, setPhotoDataUrl] = useState('');
   const [msg, setMsg] = useState('');
   const [savedFlash, setSavedFlash] = useState('');
-  const [items, setItems] = useState([]);
 
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState('');
@@ -180,11 +83,6 @@ export default function MealLogger() {
 
   const [describeOpen, setDescribeOpen] = useState(false);
   const [describeText, setDescribeText] = useState('');
-
-  const refresh = useCallback(() => {
-    fetch('/api/logs/meal').then(r => r.json()).then(d => setItems(d.logs || [])).catch(() => {});
-  }, []);
-  useEffect(() => { refresh(); }, [refresh]);
 
   // Stop the camera if the component unmounts while it's open.
   useEffect(() => {
@@ -219,7 +117,7 @@ export default function MealLogger() {
     setDescription(''); setCalories(''); setProtein(''); setCarbs(''); setFat(''); setEstimateMsg(''); setPhotoDataUrl('');
     setSavedFlash('Saved.');
     setTimeout(() => setSavedFlash(''), 1500);
-    refresh();
+    onLogged();
     router.refresh();
   }
 
@@ -367,27 +265,6 @@ export default function MealLogger() {
     await applyEstimate(dataUrl.split(',')[1], 'image/jpeg');
   }
 
-  async function saveMeal(id, fields) {
-    await fetch(`/api/logs/meal/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        description: fields.description,
-        calories: parseInt(fields.calories, 10) || null,
-        protein: parseInt(fields.protein, 10) || null,
-        carbs: parseInt(fields.carbs, 10) || null,
-        fat: parseInt(fields.fat, 10) || null,
-      }),
-    });
-    refresh();
-    router.refresh();
-  }
-
-  async function deleteMeal(id) {
-    await fetch(`/api/logs/meal/${id}`, { method: 'DELETE' });
-    refresh();
-    router.refresh();
-  }
-
   return (
     <form className="card" onSubmit={submit}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -501,15 +378,6 @@ export default function MealLogger() {
         </div>
       )}
       <button className="btn wide" style={{ marginTop: 14 }} type="submit">Save meal</button>
-
-      <LogHistory
-        items={items}
-        renderItem={i => <MealRow key={i.id} item={i} onSave={saveMeal} onDelete={deleteMeal} />}
-        summarize={dayItems => {
-          const cals = dayItems.reduce((s, i) => s + (i.calories || 0), 0);
-          return `${dayItems.length} · ${cals} cal`;
-        }}
-      />
     </form>
   );
 }

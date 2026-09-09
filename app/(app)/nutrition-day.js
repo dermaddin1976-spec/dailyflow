@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 function todayStr(){ return new Date().toISOString().slice(0, 10); }
 function shiftDate(dateStr, offset) {
@@ -24,19 +24,113 @@ function dayFullLabel(dateStr, today) {
   return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
+const miniFieldStyle = {
+  border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+  background: 'var(--surface)', color: 'var(--text)', padding: '6px 8px',
+  fontSize: 12.5, fontFamily: 'inherit', width: '100%',
+};
+
+// A single day's meal, as a two-line block (description, then a muted macro
+// line) instead of the old cramped single-row format — with the same
+// edit/delete affordances the log form used to show in its own separate
+// history list, now that this is the only place meals are listed.
+function DayMealRow({ item, onSave, onDelete }) {
+  const [editing, setEditing] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [description, setDescription] = useState(item.description);
+  const [calories, setCalories] = useState(item.calories ?? '');
+  const [protein, setProtein] = useState(item.protein ?? '');
+  const [carbs, setCarbs] = useState(item.carbs ?? '');
+  const [fat, setFat] = useState(item.fat ?? '');
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    await onSave(item.id, { description, calories, protein, carbs, fat });
+    setSaving(false);
+    setEditing(false);
+  }
+
+  function cancel() {
+    setDescription(item.description);
+    setCalories(item.calories ?? '');
+    setProtein(item.protein ?? '');
+    setCarbs(item.carbs ?? '');
+    setFat(item.fat ?? '');
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: 10, background: 'var(--surface-2)' }}>
+        <input value={description} onChange={e => setDescription(e.target.value)} style={{ ...miniFieldStyle, marginBottom: 6 }} />
+        <div className="edit-fields-4">
+          <input type="number" min="0" placeholder="cal" value={calories} onChange={e => setCalories(e.target.value)} style={miniFieldStyle} />
+          <input type="number" min="0" placeholder="protein" value={protein} onChange={e => setProtein(e.target.value)} style={miniFieldStyle} />
+          <input type="number" min="0" placeholder="carbs" value={carbs} onChange={e => setCarbs(e.target.value)} style={miniFieldStyle} />
+          <input type="number" min="0" placeholder="fat" value={fat} onChange={e => setFat(e.target.value)} style={miniFieldStyle} />
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <button type="button" className="btn secondary" style={{ fontSize: 12, padding: '6px 10px' }} onClick={cancel}>Cancel</button>
+          <button type="button" className="btn" style={{ fontSize: 12, padding: '6px 10px' }} onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      {item.photo_data_url && (
+        <>
+          <button
+            type="button"
+            onClick={() => setPhotoOpen(true)}
+            aria-label="View photo"
+            style={{ flexShrink: 0, lineHeight: 0, background: 'none', border: 'none', padding: 0, cursor: 'zoom-in' }}
+          >
+            <img
+              src={item.photo_data_url} alt=""
+              style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-strong)', display: 'block' }}
+            />
+          </button>
+          {photoOpen && (
+            <div
+              onClick={() => setPhotoOpen(false)}
+              style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, cursor: 'zoom-out',
+              }}
+            >
+              <img
+                src={item.photo_data_url} alt=""
+                style={{ maxWidth: '92vw', maxHeight: '92vh', borderRadius: 10, boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
+              />
+            </div>
+          )}
+        </>
+      )}
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: 13.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</div>
+        <div className="mono" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>
+          {[item.calories && `${item.calories} cal`, item.protein && `${item.protein}p`, item.carbs && `${item.carbs}c`, item.fat && `${item.fat}f`].filter(Boolean).join(' · ') || '—'}
+        </div>
+      </div>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <button type="button" onClick={() => setEditing(true)} aria-label="Edit meal" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0 }}>&#9998;</button>
+        <button type="button" onClick={() => onDelete(item.id)} aria-label="Delete meal" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 15, cursor: 'pointer', padding: 0 }}>&times;</button>
+      </span>
+    </div>
+  );
+}
+
 // A quick day browser for "what did I eat on X" — a row of the last 7 days
 // plus a date picker for anything further back, instead of needing to scroll
-// past the logging form into the collapsed day-by-day history to check.
-// Read-only by design: editing/deleting stays in the log form's history below,
-// which already supports it.
-export default function NutritionDayPicker() {
+// past the logging form into a separate history list. This is now the one
+// and only place meals are listed on the Nutrition tab (editing and deleting
+// included), so nothing is shown twice.
+export default function NutritionDayPicker({ items, onSave, onDelete }) {
   const today = todayStr();
   const [selected, setSelected] = useState(today);
-  const [items, setItems] = useState(null); // null = still loading
-
-  useEffect(() => {
-    fetch('/api/logs/meal').then(r => r.json()).then(d => setItems(d.logs || [])).catch(() => setItems([]));
-  }, []);
 
   const days = useMemo(() => {
     const list = [];
@@ -109,20 +203,7 @@ export default function NutritionDayPicker() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {dayItems.map(i => (
-            <div key={i.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              {i.photo_data_url && (
-                <img
-                  src={i.photo_data_url} alt=""
-                  style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-strong)', flexShrink: 0 }}
-                />
-              )}
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 13.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{i.description}</div>
-                <div className="mono" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>
-                  {[i.calories && `${i.calories} cal`, i.protein && `${i.protein}p`, i.carbs && `${i.carbs}c`, i.fat && `${i.fat}f`].filter(Boolean).join(' · ') || '—'}
-                </div>
-              </div>
-            </div>
+            <DayMealRow key={i.id} item={i} onSave={onSave} onDelete={onDelete} />
           ))}
         </div>
       )}
