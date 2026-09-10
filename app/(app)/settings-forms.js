@@ -763,11 +763,33 @@ export function AdminUsersCard() {
     }
   }
 
+  // Permanently removes an account from this list — unlike banning, this
+  // actually deletes the account and everything they've logged (sleep,
+  // meals, workouts, study, all of it). There's no undo, so this is the
+  // one action here that gets its own explicit warning before the request
+  // goes out, rather than reusing the lighter ban confirm.
+  async function deleteAccount(user) {
+    if (!window.confirm(`Permanently delete ${user.email}? This erases their account and everything they've logged. This can't be undone.`)) return;
+    setErr(''); setBusyId(user.id);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, action: 'delete' }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.error || 'Something went wrong.'); return; }
+      refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div className="card" style={{ marginTop: 16 }}>
       <h3>Accounts</h3>
       <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
-        Everyone who has signed up. Banning signs someone out everywhere and blocks them from logging back in.
+        Everyone who has signed up. Banning signs someone out everywhere and blocks them from logging back in &mdash;
+        removing an account deletes it and everything they've logged for good, so old or unwanted accounts don't
+        just sit here forever.
       </p>
       {err && <p className="error-text">{err}</p>}
       <div style={{ marginTop: 11 }}>
@@ -783,15 +805,26 @@ export function AdminUsersCard() {
                   {u.name ? `${u.name} — ` : ''}{u.email}
                   {u.banned_at && <span style={{ color: 'var(--critical)', marginLeft: 8 }}>Banned</span>}
                 </span>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  style={{ fontSize: 12, padding: '6px 12px', flexShrink: 0, ...(u.banned_at ? {} : { color: 'var(--critical)', borderColor: 'var(--critical)' }) }}
-                  disabled={busyId === u.id}
-                  onClick={() => toggleBan(u)}
+                <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    style={{ fontSize: 12, padding: '6px 12px', ...(u.banned_at ? {} : { color: 'var(--critical)', borderColor: 'var(--critical)' }) }}
+                    disabled={busyId === u.id}
+                    onClick={() => toggleBan(u)}
                 >
-                  {busyId === u.id ? '…' : u.banned_at ? 'Unban' : 'Ban'}
-                </button>
+                  {busyId === u.id ? '…' : u.banned_at ? 'Unban' : 'Ban' }
+                  </button>
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    style={{ fontSize: 12, padding: '6px 12px', color: 'var(--critical)', borderColor: 'var(--critical)' }}
+                    disabled={busyId === u.id}
+                    onClick={() => deleteAccount(u)}
+                >
+                  {busyId === u.id ? '…' : 'Remove'}
+                  </button>
+                </span>
               </div>
             ))}
           </div>
