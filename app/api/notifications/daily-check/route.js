@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../lib/db.js';
 import { sendPushToUser } from '../../../../lib/push.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -12,12 +13,17 @@ function todayStr() {
 // guarantee the exact minute — a free external scheduler sidesteps both
 // limits. Protected by a shared secret rather than requireUser(), since
 // this is called by a script, not a signed-in browser.
-export async function GET(request) {
+export const GET = withApi(async function GET(request) {
   const secret = process.env.CRON_SECRET;
   const provided = request.headers.get('x-cron-secret') || new URL(request.url).searchParams.get('secret');
   if (!secret || provided !== secret) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 401 });
   }
+
+  // Opportunistic cleanup: this cron already runs once a day, so it's a
+  // convenient place to also clear out session rows nobody's using
+  // anymore, rather than standing up a dedicated job just for that.
+  await db.exec("DELETE FROM sessions WHERE expires_at::timestamptz < now()");
 
   const date = todayStr();
 
@@ -65,4 +71,4 @@ export async function GET(request) {
   }
 
   return NextResponse.json({ ok: true, checked: users.length, notified });
-}
+});

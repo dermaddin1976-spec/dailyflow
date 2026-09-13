@@ -2,15 +2,16 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import db from '../../../lib/db.js';
 import { getUserFromToken } from '../../../lib/auth.js';
+import { withApi } from '../../../lib/apiHandler.js';
 
-export async function GET() {
+export const GET = withApi(async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get('anchor_session')?.value;
   const user = await getUserFromToken(token);
   return NextResponse.json({ user });
-}
+});
 
-export async function PATCH(request) {
+export const PATCH = withApi(async function PATCH(request) {
   const cookieStore = await cookies();
   const token = cookieStore.get('anchor_session')?.value;
   const user = await getUserFromToken(token);
@@ -40,4 +41,4 @@ export async function PATCH(request) {
   }
 
   return NextResponse.json({ ok: true });
-}
+});
