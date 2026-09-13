@@ -89,7 +89,7 @@ function DayMealRow({ item, onSave, onDelete }) {
             style={{ flexShrink: 0, lineHeight: 0, background: 'none', border: 'none', padding: 0, cursor: 'zoom-in' }}
           >
             <img
-              src={item.photo_data_url} alt=""
+              src={item.photo_data_url} alt={`Photo of ${item.description}`}
               style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-strong)', display: 'block' }}
             />
           </button>
@@ -102,7 +102,7 @@ function DayMealRow({ item, onSave, onDelete }) {
               }}
             >
               <img
-                src={item.photo_data_url} alt=""
+                src={item.photo_data_url} alt={`Photo of ${item.description}`}
                 style={{ maxWidth: '92vw', maxHeight: '92vh', borderRadius: 10, boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
               />
             </div>

@@ -371,7 +371,7 @@ export default function MealLogger({ onLogged }) {
       </div>
       {photoDataUrl && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 11 }}>
-          <img src={photoDataUrl} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)' }} />
+          <img src={photoDataUrl} alt="Meal photo preview" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)' }} />
           <button type="button" onClick={() => setPhotoDataUrl('')} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
             Remove photo
           </button>
