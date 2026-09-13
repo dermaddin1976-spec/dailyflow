@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
 import db from '../../../lib/db.js';
 import { getCurrentUser } from '../../../lib/auth.js';
+import { withApi } from '../../../lib/apiHandler.js';
 
-export async function GET() {
+export const GET = withApi(async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const rows = await db.prepare('SELECT * FROM flashcards WHERE user_id=? ORDER BY source_title, id').all(user.id);
   return NextResponse.json({ cards: rows });
-}
+});
 
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { source_title, question, answer } = await request.json();
@@ -18,9 +19,9 @@ export async function POST(request) {
     'INSERT INTO flashcards (user_id, source_title, notebook, question, answer) VALUES (?, ?, ?, ?, ?)'
   ).run(user.id, source_title, source_title, question, answer);
   return NextResponse.json({ ok: true, id: result.lastInsertRowid });
-}
+});
 
-export async function DELETE(request) {
+export const DELETE = withApi(async function DELETE(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { searchParams } = new URL(request.url);
@@ -30,4 +31,4 @@ export async function DELETE(request) {
   await db.prepare('DELETE FROM quiz_questions WHERE user_id=? AND source_title=?').run(user.id, title);
   await db.prepare('DELETE FROM study_sources WHERE user_id=? AND title=?').run(user.id, title);
   return NextResponse.json({ ok: true });
-}
+});

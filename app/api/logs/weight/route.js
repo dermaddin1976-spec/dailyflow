@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../lib/db.js';
 import { getCurrentUser } from '../../../../lib/auth.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
-export async function GET() {
+export const GET = withApi(async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const rows = await db.prepare('SELECT * FROM weight_logs WHERE user_id=? ORDER BY date DESC, id DESC LIMIT 60').all(user.id);
   return NextResponse.json({ logs: rows });
-}
+});
 
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { date, weight_kg } = await request.json();
@@ -29,4 +30,4 @@ export async function POST(request) {
   if (latest) await db.prepare('UPDATE users SET weight_kg=? WHERE id=?').run(latest.weight_kg, user.id);
 
   return NextResponse.json({ ok: true });
-}
+});

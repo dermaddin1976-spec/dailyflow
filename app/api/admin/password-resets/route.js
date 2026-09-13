@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import db from '../../../../lib/db.js';
 import { getCurrentUser } from '../../../../lib/auth.js';
 import { isAdminEmail } from '../../../../lib/config.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -12,7 +13,7 @@ async function requireAdmin() {
 
 // Pending (unused, unexpired) reset requests, oldest first, so an admin can
 // see who's waiting and copy them a link.
-export async function GET() {
+export const GET = withApi(async function GET() {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
 
@@ -24,12 +25,12 @@ export async function GET() {
   `).all(new Date().toISOString());
 
   return NextResponse.json({ requests: rows });
-}
+});
 
 // Lets an admin generate a reset link for someone directly (a friend texts
 // them instead of using the "forgot password" form) without waiting for a
 // request to come in first.
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
 
@@ -43,4 +44,4 @@ export async function POST(request) {
   await db.prepare('INSERT INTO password_resets (token, user_id, expires_at) VALUES (?, ?, ?)').run(token, user.id, expires);
 
   return NextResponse.json({ ok: true, token });
-}
+});

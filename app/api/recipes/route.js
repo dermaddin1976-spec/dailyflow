@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '../../../lib/db.js';
 import { getCurrentUser } from '../../../lib/auth.js';
+import { withApi } from '../../../lib/apiHandler.js';
 
-export async function GET() {
+export const GET = withApi(async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const rows = await db.prepare('SELECT * FROM saved_recipes WHERE user_id=? ORDER BY id DESC').all(user.id);
@@ -11,9 +12,9 @@ export async function GET() {
     ingredients: r.ingredients_json ? JSON.parse(r.ingredients_json) : [],
   }));
   return NextResponse.json({ recipes });
-}
+});
 
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { mealType, name, description, calories, protein, carbs, fat, currency, ingredients } = await request.json();
@@ -28,4 +29,4 @@ export async function POST(request) {
     currency || 'EUR', JSON.stringify(Array.isArray(ingredients) ? ingredients : []),
   );
   return NextResponse.json({ ok: true });
-}
+});

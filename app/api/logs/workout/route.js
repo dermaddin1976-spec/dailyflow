@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../lib/db.js';
 import { getCurrentUser } from '../../../../lib/auth.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { date, type, minutes, intensity, note } = await request.json();
@@ -10,11 +11,11 @@ export async function POST(request) {
   await db.prepare('INSERT INTO workout_logs (user_id, date, type, minutes, intensity, note) VALUES (?, ?, ?, ?, ?, ?)')
     .run(user.id, date, type, minutes, intensity || null, note || null);
   return NextResponse.json({ ok: true });
-}
+});
 
-export async function GET() {
+export const GET = withApi(async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const rows = await db.prepare('SELECT * FROM workout_logs WHERE user_id=? ORDER BY id DESC LIMIT 300').all(user.id);
   return NextResponse.json({ logs: rows });
-}
+});

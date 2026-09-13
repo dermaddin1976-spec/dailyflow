@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../lib/db.js';
 import { getCurrentUser } from '../../../../lib/auth.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
-export async function GET(request) {
+export const GET = withApi(async function GET(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { searchParams } = new URL(request.url);
@@ -16,9 +17,9 @@ export async function GET(request) {
       ).all(user.id, end, start)
     : await db.prepare('SELECT * FROM calendar_events WHERE user_id=? ORDER BY start_at ASC').all(user.id);
   return NextResponse.json({ events: rows });
-}
+});
 
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const body = await request.json();
@@ -30,4 +31,4 @@ export async function POST(request) {
     "INSERT INTO calendar_events (user_id, title, notes, location, start_at, end_at, all_day, source) VALUES (?, ?, ?, ?, ?, ?, ?, 'manual') RETURNING *"
   ).get(user.id, title, notes || null, location || null, start_at, end_at || null, all_day ? 1 : 0);
   return NextResponse.json({ ok: true, event: row });
-}
+});

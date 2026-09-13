@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../../lib/db.js';
 import { getCurrentUser } from '../../../../../lib/auth.js';
+import { withApi } from '../../../../../lib/apiHandler.js';
 
-export async function POST() {
+export const POST = withApi(async function POST() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   await db.prepare(
@@ -11,4 +12,4 @@ export async function POST() {
   // Synced events stay in the calendar as a record, same as Strava
   // activities do when you disconnect — only the connection itself is cut.
   return NextResponse.json({ ok: true });
-}
+});

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import db from '../../../../lib/db.js';
 import { hashPassword } from '../../../../lib/auth.js';
 import { checkRateLimit, clientIp } from '../../../../lib/rateLimit.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const rl = await checkRateLimit(`pwreset-confirm:ip:${clientIp(request)}`, 20, 60 * 60 * 1000);
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Too many attempts from this connection — try again later.' }, { status: 429 });
@@ -25,4 +26,4 @@ export async function POST(request) {
   await db.prepare('DELETE FROM sessions WHERE user_id=?').run(reset.user_id);
 
   return NextResponse.json({ ok: true });
-}
+});

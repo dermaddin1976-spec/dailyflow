@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../../lib/db.js';
 import { getCurrentUser } from '../../../../../lib/auth.js';
+import { withApi } from '../../../../../lib/apiHandler.js';
 
-export async function PATCH(request, { params }) {
+export const PATCH = withApi(async function PATCH(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id } = await params;
@@ -16,12 +17,12 @@ export async function PATCH(request, { params }) {
   ).get(title, notes || null, location || null, start_at, end_at || null, all_day ? 1 : 0, id, user.id);
   if (!row) return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
   return NextResponse.json({ ok: true, event: row });
-}
+});
 
-export async function DELETE(request, { params }) {
+export const DELETE = withApi(async function DELETE(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id } = await params;
   await db.prepare('DELETE FROM calendar_events WHERE id=? AND user_id=?').run(id, user.id);
   return NextResponse.json({ ok: true });
-}
+});

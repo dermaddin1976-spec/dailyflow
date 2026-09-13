@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '../../../../../lib/auth.js';
 import { buildAuthUrl, stravaConfigured } from '../../../../../lib/strava.js';
+import { withApi } from '../../../../../lib/apiHandler.js';
 
-export async function GET(request) {
+export const GET = withApi(async function GET(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.redirect(new URL('/login', request.url));
   if (!stravaConfigured()) {
@@ -12,4 +13,4 @@ export async function GET(request) {
   const state = String(user.id);
   const authUrl = buildAuthUrl(redirectUri, state);
   return NextResponse.redirect(authUrl);
-}
+});

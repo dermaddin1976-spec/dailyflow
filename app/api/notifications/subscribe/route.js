@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '../../../../lib/auth.js';
 import db from '../../../../lib/db.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
 
@@ -22,9 +23,9 @@ export async function POST(request) {
   `).run(user.id, endpoint, keys.p256dh, keys.auth);
 
   return NextResponse.json({ ok: true });
-}
+});
 
-export async function DELETE(request) {
+export const DELETE = withApi(async function DELETE(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
 
@@ -33,4 +34,4 @@ export async function DELETE(request) {
 
   await db.prepare('DELETE FROM push_subscriptions WHERE user_id=? AND endpoint=?').run(user.id, endpoint);
   return NextResponse.json({ ok: true });
-}
+});

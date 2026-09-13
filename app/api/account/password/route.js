@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../lib/db.js';
 import { getCurrentUser, verifyPassword, hashPassword } from '../../../../lib/auth.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { currentPassword, newPassword } = await request.json();
@@ -15,4 +16,4 @@ export async function POST(request) {
   }
   await db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hashPassword(newPassword), user.id);
   return NextResponse.json({ ok: true });
-}
+});

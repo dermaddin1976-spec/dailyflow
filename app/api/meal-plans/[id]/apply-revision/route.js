@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../../lib/db.js';
 import { getCurrentUser } from '../../../../../lib/auth.js';
+import { withApi } from '../../../../../lib/apiHandler.js';
 
-export async function POST(request, { params }) {
+export const POST = withApi(async function POST(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id } = await params;
@@ -24,4 +25,4 @@ export async function POST(request, { params }) {
     id, user.id
   );
   return NextResponse.json({ ok: true });
-}
+});

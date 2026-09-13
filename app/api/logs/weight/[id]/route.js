@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '../../../../../lib/db.js';
 import { getCurrentUser } from '../../../../../lib/auth.js';
+import { withApi } from '../../../../../lib/apiHandler.js';
 
-export async function DELETE(request, { params }) {
+export const DELETE = withApi(async function DELETE(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { id } = await params;
@@ -12,4 +13,4 @@ export async function DELETE(request, { params }) {
   if (latest) await db.prepare('UPDATE users SET weight_kg=? WHERE id=?').run(latest.weight_kg, user.id);
 
   return NextResponse.json({ ok: true });
-}
+});

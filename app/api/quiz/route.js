@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '../../../lib/db.js';
 import { getCurrentUser } from '../../../lib/auth.js';
+import { withApi } from '../../../lib/apiHandler.js';
 
-export async function GET(request) {
+export const GET = withApi(async function GET(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   const { searchParams } = new URL(request.url);
@@ -11,4 +12,4 @@ export async function GET(request) {
   const rows = await db.prepare('SELECT * FROM quiz_questions WHERE user_id=? AND source_title=? ORDER BY id').all(user.id, title);
   const questions = rows.map(r => ({ id: r.id, question: r.question, options: JSON.parse(r.options), correctIndex: r.correct_index }));
   return NextResponse.json({ questions });
-}
+});

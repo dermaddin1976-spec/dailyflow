@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import db from '../../../../lib/db.js';
 import { checkRateLimit, clientIp } from '../../../../lib/rateLimit.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
 // Always returns the same generic message whether or not the email matches
 // an account, so this endpoint can't be used to check who has signed up.
 const GENERIC_MESSAGE = "If that email has an account, a reset link has been generated. There's no email sending set up yet, so ask whoever administers this DailyFlow instance to send it to you.";
 
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const rl = await checkRateLimit(`pwreset:ip:${clientIp(request)}`, 8, 60 * 60 * 1000);
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Too many reset requests from this connection — try again later.' }, { status: 429 });
@@ -25,4 +26,4 @@ export async function POST(request) {
   }
 
   return NextResponse.json({ ok: true, message: GENERIC_MESSAGE });
-}
+});

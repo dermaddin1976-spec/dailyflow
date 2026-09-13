@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import db from '../../../../lib/db.js';
 import { getCurrentUser } from '../../../../lib/auth.js';
 import { isAdminEmail } from '../../../../lib/config.js';
+import { withApi } from '../../../../lib/apiHandler.js';
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -11,7 +12,7 @@ async function requireAdmin() {
 
 // All accounts, newest first, with ban status — lets an admin see who's on
 // the app and ban/unban problem accounts (e.g. abusive display names).
-export async function GET() {
+export const GET = withApi(async function GET() {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
 
@@ -20,7 +21,7 @@ export async function GET() {
   `).all();
 
   return NextResponse.json({ users: rows });
-}
+});
 
 // Bans, unbans, or permanently deletes an account. Banning deletes all of
 // that user's sessions immediately, so it takes effect even if they're
@@ -28,7 +29,7 @@ export async function GET() {
 // directly as a backstop. Deleting wipes the account and every row of
 // theirs across every table (no undo) — used to actually clear old or
 // unwanted accounts out of the list below instead of just hiding them.
-export async function POST(request) {
+export const POST = withApi(async function POST(request) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
 
@@ -74,4 +75,4 @@ export async function POST(request) {
   }
 
   return NextResponse.json({ ok: true });
-}
+});
