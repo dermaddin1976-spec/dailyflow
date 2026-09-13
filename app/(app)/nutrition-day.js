@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
+import Image from 'next/image';
 
 function todayStr(){ return new Date().toISOString().slice(0, 10); }
 function shiftDate(dateStr, offset) {
@@ -88,8 +89,8 @@ function DayMealRow({ item, onSave, onDelete }) {
             aria-label="View photo"
             style={{ flexShrink: 0, lineHeight: 0, background: 'none', border: 'none', padding: 0, cursor: 'zoom-in' }}
           >
-            <img
-              src={item.photo_data_url} alt={`Photo of ${item.description}`}
+            <Image
+              src={item.photo_data_url} alt={`Photo of ${item.description}`} width={34} height={34}
               style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-strong)', display: 'block' }}
             />
           </button>

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import InfoTip from './info-tip.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -125,7 +126,20 @@ export default function MealLogger({ onLogged }) {
     setEstimating(true); setEstimateMsg('');
     // Keep a smaller copy of the photo attached to this entry regardless of
     // whether the AI estimate below succeeds — the user still took the photo.
-    resizeForStorage(base64, mimeType).then(setPhotoDataUrl).catch(() => {});
+    // Upload it to Blob storage right away rather than holding the base64
+    // copy in state — the row only ever needs to store the resulting URL.
+    resizeForStorage(base64, mimeType)
+      .then(async (dataUrl) => {
+        try {
+          const res = await fetch('/api/logs/meal/photo', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photo_data_url: dataUrl }),
+          });
+          const data = await res.json();
+          if (res.ok && data.url) setPhotoDataUrl(data.url);
+        } catch (err) { /* photo upload failing shouldn't block the estimate */ }
+      })
+      .catch(() => {});
     try {
       const res = await fetch('/api/ai/estimate-meal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -371,7 +385,7 @@ export default function MealLogger({ onLogged }) {
       </div>
       {photoDataUrl && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 11 }}>
-          <img src={photoDataUrl} alt="Meal photo preview" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)' }} />
+          <Image src={photoDataUrl} alt="Meal photo preview" width={52} height={52} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)' }} />
           <button type="button" onClick={() => setPhotoDataUrl('')} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
             Remove photo
           </button>
