@@ -1,5 +1,5 @@
 import { requireUser } from '../../../lib/auth.js';
-import { ProfileForm, PasswordForm, BodyForm, StravaConnectionCard, GoogleCalendarCard, AppleHealthCard, NotificationsCard, AdminPasswordResetsCard, AdminUsersCard } from '../settings-forms.js';
+import { ProfileForm, PasswordForm, BodyForm, StravaConnectionCard, GoogleCalendarCard, AppleHealthCard, NotificationsCard, AdminPasswordResetsCard, AdminUsersCard, DangerZoneCard } from '../settings-forms.js';
 import WeightCard from '../weight-card.js';
 import { isAdminEmail } from '../../../lib/config.js';
 
@@ -19,6 +19,7 @@ export default async function SettingsPage({ searchParams }) {
       <GoogleCalendarCard connected={user.google_calendar_connected} email={user.google_calendar_email} status={gcalStatus} />
       <AppleHealthCard connected={user.apple_health_connected} />
       <NotificationsCard />
+      <DangerZoneCard />
       {isAdminEmail(user.email) && <AdminPasswordResetsCard />}
       {isAdminEmail(user.email) && <AdminUsersCard />}
     </div>

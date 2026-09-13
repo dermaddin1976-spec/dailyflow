@@ -833,3 +833,71 @@ export function AdminUsersCard() {
     </div>
   );
 }
+
+export function DangerZoneCard() {
+  const [confirming, setConfirming] = useState(false);
+  const [password, setPassword] = useState('');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  function downloadData() {
+    window.location.href = '/api/account/export';
+  }
+
+  async function deleteAccount(e) {
+    e.preventDefault();
+    setMsg(''); setBusy(true);
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
+      window.location.href = '/login';
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card" style={{ marginTop: 16, maxWidth: 420 }}>
+      <h3>Your data</h3>
+      <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4, marginBottom: 12 }}>
+        Download everything you've logged, or permanently delete your account and everything in it.
+      </p>
+      <button type="button" className="btn secondary" onClick={downloadData}>Download my data</button>
+
+      {!confirming ? (
+        <div style={{ marginTop: 12 }}>
+          <button
+            type="button"
+            className="btn secondary"
+            style={{ color: 'var(--critical)', borderColor: 'var(--critical)' }}
+            onClick={() => setConfirming(true)}
+          >
+            Delete my account
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={deleteAccount} style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            This permanently erases your account and everything you've logged — sleep, meals, workouts, study, all of it. This can't be undone.
+          </p>
+          <div className="field">
+            <label>Confirm your password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <button type="submit" className="btn" style={{ background: 'var(--critical)' }} disabled={busy}>
+              {busy ? 'Deleting…' : 'Permanently delete'}
+            </button>
+            <button type="button" className="btn secondary" onClick={() => { setConfirming(false); setPassword(''); setMsg(''); }}>
+              Cancel
+            </button>
+          </div>
+          {msg && <p className="error-text">{msg}</p>}
+        </form>
+      )}
+    </div>
+  );
+}
