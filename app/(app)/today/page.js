@@ -6,7 +6,7 @@ import { recommendedSleepHours, computeSleepDebt, formatHM } from '../../../lib/
 import { computeStreak } from '../../../lib/streak.js';
 import { getReadinessTip } from '../../../lib/readinessTip.js';
 import { buildCoachContext } from '../../../lib/coachContext.js';
-import { getProactiveInsight } from '../../../lib/insight.js';
+import { getDailyFocus } from '../../../lib/dailyFocus.js';
 import TodayCoach from '../today-coach.js';
 import { lastNDates } from '../bar-chart.js';
 
@@ -117,14 +117,14 @@ export default async function TodayPage() {
   ]);
 
   // readinessTip and coachContext depend on the readiness result above, so
-  // they run after that batch rather than inside it; insight doesn't need
+  // they run after that batch rather than inside it; dailyFocus doesn't need
   // readiness at all. None of the three depend on each other, and each is
   // its own cached-per-day AI call, so run them together instead of one
   // after another.
-  const [readinessTip, coachContext, proactiveInsight] = await Promise.all([
+  const [readinessTip, coachContext, dailyFocus] = await Promise.all([
     getReadinessTip(user.id, date, readiness),
     buildCoachContext(user.id, user, readiness),
-    getProactiveInsight(user.id, user, date),
+    getDailyFocus(user.id, user, date),
   ]);
 
   const allWorkoutDates = allWorkoutDateRows.map(r => r.date);
@@ -232,7 +232,7 @@ export default async function TodayPage() {
         </div>
       </div>
 
-      {proactiveInsight && (
+      {dailyFocus && (
         <div className="card" style={{
           marginBottom: 18, padding: '18px 24px', display: 'flex', gap: 11, alignItems: 'flex-start',
           background: 'linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), color-mix(in srgb, var(--surface) 88%, transparent))',
@@ -249,8 +249,8 @@ export default async function TodayPage() {
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em', marginBottom: 4 }}>PATTERN NOTICED</div>
-            <p style={{ margin: 0, fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>{proactiveInsight}</p>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em', marginBottom: 4 }}>FOR TOMORROW</div>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>{dailyFocus}</p>
           </div>
         </div>
       )}
