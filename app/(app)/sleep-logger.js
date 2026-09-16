@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import InfoTip from './info-tip.js';
 import LogHistory from './log-history.js';
-import { formatHM } from '../../lib/sleep.js';
+import { formatHM, hoursToTimeInput, timeInputToHours } from '../../lib/sleep.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -20,20 +20,20 @@ const miniFieldStyle = { border: '1px solid var(--border-strong)', borderRadius:
 
 function SleepRow({ item, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
-  const [hours, setHours] = useState(item.hours ?? '');
+  const [hours, setHours] = useState(hoursToTimeInput(item.hours));
   const [quality, setQuality] = useState(item.quality ?? '');
   const [note, setNote] = useState(item.note ?? '');
   const [saving, setSaving] = useState(false);
 
   async function save() {
     setSaving(true);
-    await onSave(item.id, { hours, quality, note });
+    await onSave(item.id, { hours: timeInputToHours(hours), quality, note });
     setSaving(false);
     setEditing(false);
   }
 
   function cancel() {
-    setHours(item.hours ?? ''); setQuality(item.quality ?? ''); setNote(item.note ?? '');
+    setHours(hoursToTimeInput(item.hours)); setQuality(item.quality ?? ''); setNote(item.note ?? '');
     setEditing(false);
   }
 
@@ -41,7 +41,7 @@ function SleepRow({ item, onSave, onDelete }) {
     return (
       <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: 10, background: 'var(--surface-2)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 6 }}>
-          <input type="number" step="0.1" min="0" placeholder="hours" value={hours} onChange={e => setHours(e.target.value)} style={miniFieldStyle} />
+          <input type="time" step="60" value={hours} onChange={e => setHours(e.target.value)} style={miniFieldStyle} />
           <input type="number" min="1" max="5" placeholder="quality" value={quality} onChange={e => setQuality(e.target.value)} style={miniFieldStyle} />
         </div>
         <input value={note} onChange={e => setNote(e.target.value)} placeholder="Notes (stages, RHR, bedtime...)" style={miniFieldStyle} />
@@ -94,10 +94,11 @@ export default function SleepLogger() {
   async function submit(e) {
     e.preventDefault();
     setMsg('');
-    if (!(hours >= 0)) { setMsg('Enter hours slept.'); return; }
+    const parsedHours = timeInputToHours(hours);
+    if (parsedHours == null || parsedHours <= 0) { setMsg('Enter hours slept.'); return; }
     const res = await fetch('/api/logs/sleep', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: todayStr(), hours: Number(hours), quality: Number(quality), note: note || null }),
+      body: JSON.stringify({ date: todayStr(), hours: parsedHours, quality: Number(quality), note: note || null }),
     });
     const data = await res.json();
     if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
@@ -121,7 +122,7 @@ export default function SleepLogger() {
       });
       const data = await res.json();
       if (!res.ok) { setEstimateMsg(data.error || 'Read failed.'); return; }
-      setHours(data.hours ? String(data.hours) : '');
+      setHours(data.hours ? hoursToTimeInput(data.hours) : '');
       if (data.quality) setQuality(data.quality);
       setNote(data.summary || '');
       setEstimateMsg(`DailyAI read (${data.confidence || 'medium'} confidence) — review before saving.`);
@@ -136,7 +137,7 @@ export default function SleepLogger() {
     await fetch(`/api/logs/sleep/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        hours: parseFloat(fields.hours) || 0,
+        hours: fields.hours,
         quality: parseInt(fields.quality, 10) || null,
         note: fields.note || null,
       }),
@@ -174,7 +175,7 @@ export default function SleepLogger() {
       {msg && <p className="error-text">{msg}</p>}
       <div className="field">
         <label>Hours slept</label>
-        <input type="number" step="0.1" min="0" value={hours} onChange={e => setHours(e.target.value)} required />
+        <input type="time" step="60" value={hours} onChange={e => setHours(e.target.value)} required />
       </div>
       <div className="field">
         <label>Quality (1&ndash;5)</label>
