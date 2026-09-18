@@ -40,5 +40,10 @@ export const PATCH = withApi(async function PATCH(request) {
       .run(age, weight_kg, height_cm, sex, activity_level, goal, target_weight_kg, user.id);
   }
 
+  if ('sleep_goal_hours' in body) {
+    const sleep_goal_hours = body.sleep_goal_hours ? parseFloat(body.sleep_goal_hours) : null;
+    await db.prepare('UPDATE users SET sleep_goal_hours=? WHERE id=?').run(sleep_goal_hours, user.id);
+  }
+
   return NextResponse.json({ ok: true });
 });

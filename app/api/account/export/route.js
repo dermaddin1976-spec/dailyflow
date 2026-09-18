@@ -17,7 +17,7 @@ export const GET = withApi(async function GET() {
     flashcards, weight_logs, calendar_events, quiz_questions, study_notes,
     study_sources, meal_plans, saved_recipes,
   ] = await Promise.all([
-    db.prepare('SELECT email, name, age, weight_kg, height_cm, sex, activity_level, goal, target_weight_kg, grocery_store, kitchen_tools, created_at FROM users WHERE id=?').get(uid),
+    db.prepare('SELECT email, name, age, weight_kg, height_cm, sex, activity_level, goal, target_weight_kg, sleep_goal_hours, grocery_store, kitchen_tools, created_at FROM users WHERE id=?').get(uid),
     db.prepare('SELECT * FROM sleep_logs WHERE user_id=?').all(uid),
     db.prepare('SELECT * FROM study_logs WHERE user_id=?').all(uid),
     db.prepare('SELECT * FROM workout_logs WHERE user_id=?').all(uid),

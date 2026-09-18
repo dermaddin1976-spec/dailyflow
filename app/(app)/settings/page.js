@@ -1,5 +1,5 @@
 import { requireUser } from '../../../lib/auth.js';
-import { ProfileForm, PasswordForm, BodyForm, StravaConnectionCard, GoogleCalendarCard, AppleHealthCard, NotificationsCard, AdminPasswordResetsCard, AdminUsersCard, DangerZoneCard } from '../settings-forms.js';
+import { ProfileForm, PasswordForm, BodyForm, SleepGoalForm, StravaConnectionCard, GoogleCalendarCard, AppleHealthCard, NotificationsCard, AdminPasswordResetsCard, AdminUsersCard, DangerZoneCard } from '../settings-forms.js';
 import WeightCard from '../weight-card.js';
 import { isAdminEmail } from '../../../lib/config.js';
 
@@ -14,6 +14,7 @@ export default async function SettingsPage({ searchParams }) {
       <ProfileForm user={user} />
       <BodyForm user={user} />
       <WeightCard initialWeightKg={user.weight_kg} />
+      <SleepGoalForm user={user} />
       <PasswordForm />
       <StravaConnectionCard connected={user.strava_connected} status={stravaStatus} />
       <GoogleCalendarCard connected={user.google_calendar_connected} email={user.google_calendar_email} status={gcalStatus} />

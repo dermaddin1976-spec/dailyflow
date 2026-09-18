@@ -28,7 +28,7 @@ export default async function SleepPage() {
     ).all(user.id, debtDates[0], debtDates[debtDates.length - 1]),
   ]);
   const dailyMap = Object.fromEntries(dailyRows.map(r => [r.date, Math.round((r.hours || 0) * 10) / 10]));
-  const target = recommendedSleepHours(user.age);
+  const target = user.sleep_goal_hours || recommendedSleepHours(user.age);
   const debt = computeSleepDebt(debtRows.map(r => r.hours), target, DEBT_WINDOW_DAYS);
   const debtStatus = debtLabel(debt.debtHours);
 

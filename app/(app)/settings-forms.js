@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ActivityIcon from './activity-icon.js';
+import { hoursToTimeInput, timeInputToHours, recommendedSleepHours } from '../../lib/sleep.js';
 
 export function ProfileForm({ user }) {
   const router = useRouter();
@@ -125,6 +126,65 @@ export function BodyForm({ user }) {
         </div>
       )}
       <button className="btn" style={{ marginTop: 13 }} type="submit">Save &amp; recalculate</button>
+      {ok && <span style={{ marginLeft: 12, color: 'var(--good)', fontSize: 13 }}>Saved.</span>}
+      {msg && <p className="error-text">{msg}</p>}
+    </form>
+  );
+}
+
+
+export function SleepGoalForm({ user }) {
+  const router = useRouter();
+  const fallback = recommendedSleepHours(user.age);
+  const [time, setTime] = useState(hoursToTimeInput(user.sleep_goal_hours || fallback));
+  const [msg, setMsg] = useState('');
+  const [ok, setOk] = useState(false);
+
+  async function submit(e) {
+    e.preventDefault();
+    setMsg(''); setOk(false);
+    const hours = timeInputToHours(time);
+    const res = await fetch('/api/me', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sleep_goal_hours: hours || '' }),
+    });
+    const data = await res.json();
+    if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
+    setOk(true);
+    router.refresh();
+  }
+
+  async function useDefault(e) {
+    e.preventDefault();
+    setMsg(''); setOk(false);
+    const res = await fetch('/api/me', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sleep_goal_hours: '' }),
+    });
+    const data = await res.json();
+    if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
+    setTime(hoursToTimeInput(fallback));
+    setOk(true);
+    router.refresh();
+  }
+
+  return (
+    <form className="card" onSubmit={submit} style={{ maxWidth: 420, marginTop: 16 }}>
+      <h3>Sleep goal</h3>
+      <p style={{ color: 'var(--text-2)', fontSize: 12.5, marginTop: 4 }}>
+        Used as your target on the Sleep tab, in readiness scoring, and in sleep-debt tracking. Leave it as the
+        default ({hoursToTimeInput(fallback)}) if you'd rather DailyFlow work off your age instead.
+      </p>
+      <div className="field">
+        <label>Target sleep</label>
+        <input type="time" step="60" value={time} onChange={e => setTime(e.target.value)} required />
+      </div>
+      <button className="btn" style={{ marginTop: 13 }} type="submit">Save sleep goal</button>
+      {user.sleep_goal_hours != null && (
+        <button className="btn secondary" style={{ marginTop: 13, marginLeft: 8 }} type="button" onClick={useDefault}>
+          Use age-based default
+        </button>
+      )}
       {ok && <span style={{ marginLeft: 12, color: 'var(--good)', fontSize: 13 }}>Saved.</span>}
       {msg && <p className="error-text">{msg}</p>}
     </form>

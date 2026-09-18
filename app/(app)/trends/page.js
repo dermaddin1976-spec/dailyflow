@@ -26,7 +26,7 @@ export default async function TrendsPage({ searchParams }) {
 
   const DEBT_WINDOW_DAYS = 14;
   const debtDates = lastNDates(DEBT_WINDOW_DAYS);
-  const sleepTarget = recommendedSleepHours(user.age);
+  const sleepTarget = user.sleep_goal_hours || recommendedSleepHours(user.age);
 
   // Correlation: average study focus on days that followed a night at/above the sleep target,
   // versus days that followed a shorter night. Needs sleep data starting one day before the range.

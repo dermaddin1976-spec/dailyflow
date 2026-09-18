@@ -13,7 +13,7 @@ import { lastNDates } from '../bar-chart.js';
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function dateStr(offset){ const d = new Date(); d.setDate(d.getDate() + offset); return d.toISOString().slice(0,10); }
 
-async function computeReadiness(userId, userAge) {
+async function computeReadiness(userId, userAge, sleepGoalHours) {
   const weekStart = dateStr(-6), weekEnd = dateStr(0);
   const yesterday = dateStr(-1);
   const priorStart = dateStr(-7), priorEnd = dateStr(-2);
@@ -30,7 +30,7 @@ async function computeReadiness(userId, userAge) {
 
   const components = [];
 
-  const sleepTarget = recommendedSleepHours(userAge);
+  const sleepTarget = sleepGoalHours || recommendedSleepHours(userAge);
   if (lastSleep) {
     const score = Math.max(0, Math.min(100, Math.round((lastSleep.hours / sleepTarget) * 100)));
     components.push({ name: 'Sleep', score, reason: `${formatHM(lastSleep.hours)} logged` });
@@ -109,7 +109,7 @@ export default async function TodayPage() {
     db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM study_logs WHERE user_id=? AND date=?').get(user.id, date),
     db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM workout_logs WHERE user_id=? AND date=?').get(user.id, date),
     db.prepare('SELECT COUNT(*) as count, COALESCE(SUM(calories),0) as calories FROM meal_logs WHERE user_id=? AND date=?').get(user.id, date),
-    computeReadiness(user.id, user.age),
+    computeReadiness(user.id, user.age, user.sleep_goal_hours),
     db.prepare('SELECT DISTINCT date FROM workout_logs WHERE user_id=?').all(user.id),
     db.prepare(
       'SELECT date, AVG(hours) as hours FROM sleep_logs WHERE user_id=? AND date BETWEEN ? AND ? GROUP BY date'
@@ -129,7 +129,7 @@ export default async function TodayPage() {
 
   const allWorkoutDates = allWorkoutDateRows.map(r => r.date);
   const streak = computeStreak(allWorkoutDates);
-  const sleepDebt = computeSleepDebt(debtRows.map(r => r.hours), recommendedSleepHours(user.age), DEBT_WINDOW_DAYS);
+  const sleepDebt = computeSleepDebt(debtRows.map(r => r.hours), user.sleep_goal_hours || recommendedSleepHours(user.age), DEBT_WINDOW_DAYS);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
