@@ -82,7 +82,7 @@ h1,h2,h3{ font-weight:600; letter-spacing:-.01em; text-wrap: balance; margin:0; 
 .app-sidebar{
   width:222px; flex-shrink:0; display:flex; flex-direction:column;
   padding:24px 14px; border-right:1px solid var(--border); background:color-mix(in srgb, var(--surface) 92%, transparent);
-  position:sticky; top:0; height:100vh; overflow-y:auto;
+  position:fixed; top:0; left:0; height:100vh; overflow-y:auto; z-index:10;
 }
 .app-sidebar .brand{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px; padding:0 8px; margin-bottom:26px; }
 .brand-mark{ width:32px; height:32px; border-radius:9px; background:var(--btn-gradient); color:var(--accent-ink);
@@ -103,8 +103,8 @@ h1,h2,h3{ font-weight:600; letter-spacing:-.01em; text-wrap: balance; margin:0; 
   padding:14px 12px 0; margin-top:14px; border-top:1px solid var(--border); cursor:pointer;
 }
 
-.app-main{ flex:1; min-width:0; position:relative; }
-.app-main-inner{ max-width:860px; margin:0 auto; padding:24px 24px 56px; }
+.app-main{ flex:1; min-width:0; position:relative; margin-left:222px; }
+.app-main-inner{ max-width:1100px; margin:0 auto; padding:24px 32px 56px; }
 
 .app-topbar{ display:none; }
 .app-sidebar-backdrop{ display:none; }
@@ -147,6 +147,7 @@ h1,h2,h3{ font-weight:600; letter-spacing:-.01em; text-wrap: balance; margin:0; 
   }
   .drawer-close:hover{ background:var(--surface-2); color:var(--text); }
 
+  .app-main{ margin-left:0; }
   .app-main-inner{ padding:16px 16px 44px; }
 }
 
