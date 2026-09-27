@@ -13,7 +13,7 @@ export default async function SettingsPage({ searchParams }) {
       <h1 style={{ fontSize: 24, marginBottom: 16 }}>Settings</h1>
       <ProfileForm user={user} />
       <BodyForm user={user} />
-      <WeightCard initialWeightKg={user.weight_kg} />
+      <WeightCard initialWeightKg={user.weight_kg} targetWeightKg={user.target_weight_kg} goal={user.goal} />
       <SleepGoalForm user={user} />
       <PasswordForm />
       <StravaConnectionCard connected={user.strava_connected} status={stravaStatus} />

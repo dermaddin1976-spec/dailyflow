@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import InfoTip from './info-tip.js';
 import { WeightChart } from './weight-chart.js';
+import { forecastWeightGoal, formatDuration } from '../../lib/weight.js';
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 
@@ -11,7 +12,7 @@ const fieldStyle = {
   background: 'var(--surface-2)', color: 'var(--text)', padding: '9px 11px', fontSize: 13.5, fontFamily: 'inherit',
 };
 
-export default function WeightCard({ initialWeightKg }) {
+export default function WeightCard({ initialWeightKg, targetWeightKg, goal }) {
   const router = useRouter();
   const [weight, setWeight] = useState(initialWeightKg ? String(initialWeightKg) : '');
   const [date, setDate] = useState(todayStr());
@@ -48,6 +49,7 @@ export default function WeightCard({ initialWeightKg }) {
   }
 
   const chartEntries = [...entries].reverse();
+  const forecast = forecastWeightGoal(chartEntries, targetWeightKg, goal);
 
   return (
     <div className="card" style={{ maxWidth: 420, marginTop: 16 }}>
@@ -65,7 +67,27 @@ export default function WeightCard({ initialWeightKg }) {
         {entries.length === 0 ? (
           <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>Nothing logged yet.</p>
         ) : (
-          <WeightChart entries={chartEntries} />
+          <WeightChart entries={chartEntries} targetWeightKg={targetWeightKg} forecast={forecast} />
+        )}
+        {forecast && forecast.status === 'on_track' && (
+          <p style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 8 }}>
+            At this rate: <span className="mono" style={{ color: 'var(--text)' }}>{forecast.targetWeightKg} kg</span> in about{' '}
+            {formatDuration(forecast.daysToGoal)} ({forecast.projectedDate}).
+          </p>
+        )}
+        {forecast && forecast.status === 'reached' && (
+          <p style={{ fontSize: 12, color: 'var(--good)', marginTop: 8 }}>You've reached your target weight.</p>
+        )}
+        {forecast && forecast.status === 'wrong_direction' && (
+          <p style={{ fontSize: 12, color: 'var(--warning)', marginTop: 8 }}>
+            Recent trend is heading away from your {goal === 'lose' ? 'loss' : 'gain'} goal ({forecast.slopePerWeek > 0 ? '+' : ''}{forecast.slopePerWeek} kg/week)
+            &mdash; no projection until that turns around.
+          </p>
+        )}
+        {forecast && forecast.status === 'too_slow' && (
+          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
+            Trend is nearly flat ({forecast.slopePerWeek} kg/week) &mdash; too slow right now to project a realistic date.
+          </p>
         )}
       </div>
 
