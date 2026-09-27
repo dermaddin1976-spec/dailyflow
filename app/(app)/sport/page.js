@@ -1,7 +1,8 @@
 import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import InfoTip from '../info-tip.js';
-import { BarChart, lastNDates } from '../bar-chart.js';
+import { BarChart } from '../bar-chart.js';
+import { lastNDates } from '../../../lib/dates.js';
 import SessionLogger from '../session-logger.js';
 import { StravaImportCard } from '../settings-forms.js';
 import ActivityIcon from '../activity-icon.js';

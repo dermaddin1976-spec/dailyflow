@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import InfoTip from '../info-tip.js';
-import { BarChart, lastNDates } from '../bar-chart.js';
+import { BarChart } from '../bar-chart.js';
+import { lastNDates } from '../../../lib/dates.js';
+import { AiCoachCard } from '../ai-coach-card.js';
 import { recommendedSleepHours, computeSleepDebt, formatHM } from '../../../lib/sleep.js';
 import { computeStreak } from '../../../lib/streak.js';
 import { getWeeklyRecap } from '../../../lib/weeklyRecap.js';
@@ -99,28 +101,16 @@ export default async function TrendsPage({ searchParams }) {
       <p style={{ color: 'var(--text-2)', marginBottom: 16 }}>Last {rangeDays} days.</p>
 
       {weeklyRecap && (
-        <div className="card" style={{
-          marginBottom: 18, padding: '18px 24px', display: 'flex', gap: 11, alignItems: 'flex-start',
-          background: 'linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), color-mix(in srgb, var(--surface) 88%, transparent))',
-          borderColor: 'color-mix(in srgb, var(--accent) 32%, var(--border))',
-        }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: '50%', flexShrink: 0, marginTop: 1,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'color-mix(in srgb, var(--accent) 22%, transparent)',
-            boxShadow: '0 0 16px color-mix(in srgb, var(--accent) 45%, transparent)',
-          }}>
+        <AiCoachCard
+          label={`WEEKLY RECAP${weeklyRecap.weekStart ? ` · ${weeklyRecap.weekStart} to ${weeklyRecap.weekEnd}` : ''}`}
+          icon={
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="17" rx="2" /><path d="M8 2v4M16 2v4M3 10h18" />
             </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em', marginBottom: 4 }}>
-              WEEKLY RECAP {weeklyRecap.weekStart ? `· ${weeklyRecap.weekStart} to ${weeklyRecap.weekEnd}` : ''}
-            </div>
-            <p style={{ margin: 0, fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>{weeklyRecap.text}</p>
-          </div>
-        </div>
+          }
+        >
+          {weeklyRecap.text}
+        </AiCoachCard>
       )}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>

@@ -8,7 +8,8 @@ import { getReadinessTip } from '../../../lib/readinessTip.js';
 import { buildCoachContext } from '../../../lib/coachContext.js';
 import { getDailyFocus } from '../../../lib/dailyFocus.js';
 import TodayCoach from '../today-coach.js';
-import { lastNDates } from '../bar-chart.js';
+import { AiCoachCard } from '../ai-coach-card.js';
+import { lastNDates } from '../../../lib/dates.js';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function dateStr(offset){ const d = new Date(); d.setDate(d.getDate() + offset); return d.toISOString().slice(0,10); }
@@ -206,12 +207,19 @@ export default async function TodayPage() {
           </div>
         </div>
         {readinessTip && (
-          <p style={{
+          <div style={{
             marginTop: 14, paddingTop: 13, borderTop: '1px solid var(--border)',
-            fontSize: 13, color: 'var(--text-2)', fontStyle: 'italic', lineHeight: 1.5,
+            display: 'flex', gap: 8, alignItems: 'flex-start',
           }}>
-            &ldquo;{readinessTip}&rdquo;
-          </p>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
+              <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" />
+            </svg>
+            <p style={{
+              margin: 0, fontSize: 13, color: 'var(--text-2)', fontStyle: 'italic', lineHeight: 1.5,
+            }}>
+              &ldquo;{readinessTip}&rdquo;
+            </p>
+          </div>
         )}
       </div>
 
@@ -241,26 +249,16 @@ export default async function TodayPage() {
       </div>
 
       {dailyFocus && (
-        <div className="card" style={{
-          marginBottom: 18, padding: '18px 24px', display: 'flex', gap: 11, alignItems: 'flex-start',
-          background: 'linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), color-mix(in srgb, var(--surface) 88%, transparent))',
-          borderColor: 'color-mix(in srgb, var(--accent) 32%, var(--border))',
-        }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: '50%', flexShrink: 0, marginTop: 1,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'color-mix(in srgb, var(--accent) 22%, transparent)',
-            boxShadow: '0 0 16px color-mix(in srgb, var(--accent) 45%, transparent)',
-          }}>
+        <AiCoachCard
+          label="FOR TOMORROW"
+          icon={
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
             </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.03em', marginBottom: 4 }}>FOR TOMORROW</div>
-            <p style={{ margin: 0, fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>{dailyFocus}</p>
-          </div>
-        </div>
+          }
+        >
+          {dailyFocus}
+        </AiCoachCard>
       )}
 
       <TodayCoach context={coachContext} />

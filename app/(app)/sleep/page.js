@@ -1,7 +1,8 @@
 import { requireUser } from '../../../lib/auth.js';
 import db from '../../../lib/db.js';
 import InfoTip from '../info-tip.js';
-import { BarChart, lastNDates } from '../bar-chart.js';
+import { BarChart } from '../bar-chart.js';
+import { lastNDates } from '../../../lib/dates.js';
 import SleepLogger from '../sleep-logger.js';
 import Link from 'next/link';
 import { recommendedSleepHours, computeSleepDebt, debtLabel, formatHM } from '../../../lib/sleep.js';

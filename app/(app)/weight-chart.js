@@ -1,4 +1,10 @@
+'use client';
+
+import { useState } from 'react';
+
 export function WeightChart({ entries, targetWeightKg, forecast }) {
+  const [active, setActive] = useState(null);
+
   if (!entries || entries.length < 2) {
     return (
       <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>
@@ -44,26 +50,70 @@ export function WeightChart({ entries, targetWeightKg, forecast }) {
 
   const targetY = targetInRange ? height - ((targetWeightKg - yMin) / span) * height : null;
 
+  // Unified list of hoverable/tappable markers: logged points plus, if present, the projected goal point.
+  const markers = [
+    ...points.map((p, i) => ({ key: `p${i}`, x: p.x, y: p.y, date: p.e.date, text: `${p.e.weight_kg} kg` })),
+    ...(projectedPoint ? [{ key: 'proj', x: projectedPoint.x, y: projectedPoint.y, date: forecast.projectedDate, text: `${forecast.targetWeightKg} kg (projected)` }] : []),
+  ];
+  const activeMarker = active != null ? markers.find(m => m.key === active) : null;
+  const clear = (key) => setActive((cur) => (cur === key ? null : cur));
+
   return (
     <div>
-      <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ overflow: 'visible', display: 'block' }}>
-        {targetInRange && (
-          <line
-            x1="0" x2={width} y1={targetY} y2={targetY}
-            stroke="var(--good)" strokeWidth="1" strokeDasharray="2,2" vectorEffect="non-scaling-stroke" opacity="0.55"
-          />
+      <div style={{ position: 'relative' }}>
+        {activeMarker && (
+          <div
+            className="chart-tooltip"
+            style={{ left: `${activeMarker.x}%`, top: `${(activeMarker.y / height) * 100}%` }}
+          >
+            <span className="chart-tooltip-date">{activeMarker.date}</span>
+            <span className="chart-tooltip-value">{activeMarker.text}</span>
+          </div>
         )}
-        <path d={path} fill="none" stroke="var(--accent)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-        {projectedPath && (
-          <path d={projectedPath} fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeDasharray="3,2.5" vectorEffect="non-scaling-stroke" opacity="0.6" />
-        )}
-        {points.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={i === points.length - 1 ? 2.4 : 1.3} fill="var(--accent)" vectorEffect="non-scaling-stroke" />
-        ))}
-        {projectedPoint && (
-          <circle cx={projectedPoint.x} cy={projectedPoint.y} r="2.4" fill="none" stroke="var(--accent)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
-        )}
-      </svg>
+        <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ overflow: 'visible', display: 'block' }}>
+          {[0.25, 0.5, 0.75].map((f) => (
+            <line
+              key={f}
+              x1="0" x2={width} y1={height * f} y2={height * f}
+              stroke="var(--border)" strokeWidth="1" vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          {targetInRange && (
+            <line
+              x1="0" x2={width} y1={targetY} y2={targetY}
+              stroke="var(--good)" strokeWidth="1" strokeDasharray="2,2" vectorEffect="non-scaling-stroke" opacity="0.55"
+            />
+          )}
+          <path d={path} fill="none" stroke="var(--accent)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+          {projectedPath && (
+            <path d={projectedPath} fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeDasharray="3,2.5" vectorEffect="non-scaling-stroke" opacity="0.6" />
+          )}
+          {points.map((p, i) => (
+            <circle key={i} cx={p.x} cy={p.y} r={i === points.length - 1 ? 2.4 : 1.3} fill="var(--accent)" vectorEffect="non-scaling-stroke" />
+          ))}
+          {projectedPoint && (
+            <circle cx={projectedPoint.x} cy={projectedPoint.y} r="2.4" fill="none" stroke="var(--accent)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+          )}
+          {markers.map((m) => (
+            <circle
+              key={m.key}
+              cx={m.x} cy={m.y} r="5"
+              fill="transparent"
+              tabIndex={0}
+              role="button"
+              aria-label={`${m.date}: ${m.text}`}
+              aria-pressed={active === m.key}
+              style={{ cursor: 'pointer' }}
+              vectorEffect="non-scaling-stroke"
+              onMouseEnter={() => setActive(m.key)}
+              onMouseLeave={() => clear(m.key)}
+              onFocus={() => setActive(m.key)}
+              onBlur={() => clear(m.key)}
+              onClick={() => setActive((cur) => (cur === m.key ? null : m.key))}
+            />
+          ))}
+        </svg>
+      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>
         <span>{entries[0].date}</span>
         <span className="mono" style={{ color: 'var(--text-2)' }}>{last.e.weight_kg} kg</span>
