@@ -103,7 +103,7 @@ h1,h2,h3{ font-weight:600; letter-spacing:-.01em; text-wrap: balance; margin:0; 
   padding:14px 12px 0; margin-top:14px; border-top:1px solid var(--border); cursor:pointer;
 }
 
-.app-main{ flex:1; min-width:0; }
+.app-main{ flex:1; min-width:0; position:relative; }
 .app-main-inner{ max-width:860px; margin:0 auto; padding:24px 24px 56px; }
 
 .app-topbar{ display:none; }
