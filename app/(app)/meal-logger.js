@@ -67,6 +67,9 @@ export default function MealLogger({ onLogged }) {
   const [estimating, setEstimating] = useState(false);
   const [estimateMsg, setEstimateMsg] = useState('');
   const [photoDataUrl, setPhotoDataUrl] = useState('');
+  const [photoBase64, setPhotoBase64] = useState('');
+  const [photoMime, setPhotoMime] = useState('');
+  const [detailsText, setDetailsText] = useState('');
   const [msg, setMsg] = useState('');
   const [savedFlash, setSavedFlash] = useState('');
 
@@ -116,34 +119,43 @@ export default function MealLogger({ onLogged }) {
     const data = await res.json();
     if (!res.ok) { setMsg(data.error || 'Something went wrong.'); return; }
     setDescription(''); setCalories(''); setProtein(''); setCarbs(''); setFat(''); setEstimateMsg(''); setPhotoDataUrl('');
+    setPhotoBase64(''); setPhotoMime(''); setDetailsText('');
     setSavedFlash('Saved.');
     setTimeout(() => setSavedFlash(''), 1500);
     onLogged();
     router.refresh();
   }
 
-  async function applyEstimate(base64, mimeType) {
+  async function applyEstimate(base64, mimeType, opts = {}) {
+    const { uploadPhoto = true, details } = opts;
     setEstimating(true); setEstimateMsg('');
+    // Keep the raw photo around (not just its uploaded URL) so a follow-up
+    // "add details" re-estimate can reuse it without asking for the photo again.
+    setPhotoBase64(base64);
+    setPhotoMime(mimeType);
     // Keep a smaller copy of the photo attached to this entry regardless of
     // whether the AI estimate below succeeds — the user still took the photo.
     // Upload it to Blob storage right away rather than holding the base64
     // copy in state — the row only ever needs to store the resulting URL.
-    resizeForStorage(base64, mimeType)
-      .then(async (dataUrl) => {
-        try {
-          const res = await fetch('/api/logs/meal/photo', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photo_data_url: dataUrl }),
-          });
-          const data = await res.json();
-          if (res.ok && data.url) setPhotoDataUrl(data.url);
-        } catch (err) { /* photo upload failing shouldn't block the estimate */ }
-      })
-      .catch(() => {});
+    // Skipped on a details-only re-estimate — the photo's already uploaded.
+    if (uploadPhoto) {
+      resizeForStorage(base64, mimeType)
+        .then(async (dataUrl) => {
+          try {
+            const res = await fetch('/api/logs/meal/photo', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ photo_data_url: dataUrl }),
+            });
+            const data = await res.json();
+            if (res.ok && data.url) setPhotoDataUrl(data.url);
+          } catch (err) { /* photo upload failing shouldn't block the estimate */ }
+        })
+        .catch(() => {});
+    }
     try {
       const res = await fetch('/api/ai/estimate-meal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mimeType }),
+        body: JSON.stringify({ imageBase64: base64, mimeType, details: details || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { setEstimateMsg(data.error || 'Estimate failed.'); return; }
@@ -158,6 +170,11 @@ export default function MealLogger({ onLogged }) {
     } finally {
       setEstimating(false);
     }
+  }
+
+  async function reEstimateWithDetails() {
+    if (!photoBase64 || !detailsText.trim()) return;
+    await applyEstimate(photoBase64, photoMime, { uploadPhoto: false, details: detailsText.trim() });
   }
 
   async function handleFile(e) {
@@ -386,8 +403,37 @@ export default function MealLogger({ onLogged }) {
       {photoDataUrl && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 11 }}>
           <Image src={photoDataUrl} alt="Meal photo preview" width={52} height={52} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)' }} />
-          <button type="button" onClick={() => setPhotoDataUrl('')} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+          <button
+            type="button"
+            onClick={() => { setPhotoDataUrl(''); setPhotoBase64(''); setPhotoMime(''); setDetailsText(''); }}
+            style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+          >
             Remove photo
+          </button>
+        </div>
+      )}
+      {photoBase64 && !cameraOpen && !scannerOpen && !describeOpen && (
+        <div className="field" style={{ marginTop: 11 }}>
+          <label>Add details DailyAI might miss</label>
+          <textarea
+            value={detailsText}
+            onChange={e => setDetailsText(e.target.value)}
+            placeholder="e.g. protein powder, banana, oat milk, one tbsp peanut butter"
+            rows={2}
+            style={{
+              width: '100%', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+              background: 'var(--surface)', color: 'var(--text)', padding: '8px 10px', fontSize: 13,
+              fontFamily: 'inherit', resize: 'vertical',
+            }}
+          />
+          <span style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 4 }}>
+            Useful for anything blended or mixed together, like a smoothie, where the ingredients aren't visible on their own.
+          </span>
+          <button
+            type="button" className="btn secondary" style={{ marginTop: 8, alignSelf: 'flex-start' }}
+            onClick={reEstimateWithDetails} disabled={estimating || !detailsText.trim()}
+          >
+            {estimating ? (<><span className="spinner" />Updating…</>) : 'Update estimate with these details'}
           </button>
         </div>
       )}

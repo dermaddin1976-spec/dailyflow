@@ -16,7 +16,7 @@ export async function POST(request) {
     );
   }
 
-  const { imageBase64, mimeType } = await request.json();
+  const { imageBase64, mimeType, details } = await request.json();
   if (!imageBase64) return NextResponse.json({ error: 'No image provided.' }, { status: 400 });
 
   try {
@@ -40,10 +40,18 @@ export async function POST(request) {
         'with a realistic amount whenever the dish looks like it would plausibly include them (a shiny or glossy',
         'surface, a dressed salad, a creamy or fried appearance), instead of only accounting for what is cleanly',
         'visible as separate solid food.',
+        details
+          ? `The user has told you exactly what this is: "${details}". Trust this for identifying what's actually`
+          + ' in the photo and for ingredients you cannot see on their own — this matters most for something'
+          + ' blended or mixed together (a smoothie, a soup, a sauce-covered dish) where individual ingredients'
+          + " aren't visually distinguishable. Still judge realistic portion size/weight from what you see in"
+          + ' the image itself, and still list every ingredient they mentioned as its own item with its own'
+          + ' estimated grams/calories/macros.'
+          : '',
         'Respond ONLY with JSON matching this shape:',
         '{"items": [{"name": string, "grams": number, "calories": number, "protein": number, "carbs": number, "fat": number}], "description": string (short, e.g. "Grilled chicken, rice, broccoli"), "confidence": "low" | "medium" | "high"}',
         'If you cannot identify food in the image, set items to an empty array, description to "Could not identify food", and confidence to "low".',
-      ].join(' '),
+      ].filter(Boolean).join(' '),
       fileBase64: imageBase64,
       mimeType: mimeType || 'image/jpeg',
       temperature: 0.15,

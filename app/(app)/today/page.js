@@ -15,13 +15,18 @@ function dateStr(offset){ const d = new Date(); d.setDate(d.getDate() + offset);
 
 async function computeReadiness(userId, userAge, sleepGoalHours) {
   const weekStart = dateStr(-6), weekEnd = dateStr(0);
+  const today = weekEnd;
   const yesterday = dateStr(-1);
   const priorStart = dateStr(-7), priorEnd = dateStr(-2);
 
   // These five reads don't depend on each other, so fire them all at once
   // instead of waiting for each one to finish before starting the next.
+  // lastSleep is scoped to TODAY specifically (last night's sleep, logged
+  // this morning) — without the date filter this used to fall back to
+  // whatever was last logged at all, so a night you forgot to log would
+  // silently show a days-old entry instead of "not logged yet."
   const [lastSleep, training, studyWeek, yesterdayMeals, priorDays] = await Promise.all([
-    db.prepare('SELECT * FROM sleep_logs WHERE user_id=? ORDER BY date DESC LIMIT 1').get(userId),
+    db.prepare('SELECT * FROM sleep_logs WHERE user_id=? AND date=? ORDER BY id DESC LIMIT 1').get(userId, today),
     db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM workout_logs WHERE user_id=? AND date BETWEEN ? AND ?').get(userId, weekStart, weekEnd),
     db.prepare('SELECT COALESCE(SUM(minutes),0) as total FROM study_logs WHERE user_id=? AND date BETWEEN ? AND ?').get(userId, weekStart, weekEnd),
     db.prepare('SELECT COALESCE(SUM(calories),0) as total, COUNT(*) as count FROM meal_logs WHERE user_id=? AND date=?').get(userId, yesterday),
@@ -57,9 +62,12 @@ async function computeReadiness(userId, userAge, sleepGoalHours) {
     const avgPrior = priorDays.reduce((s, r) => s + r.total, 0) / priorDays.length;
     const deviation = avgPrior > 0 ? Math.abs(yesterdayMeals.total - avgPrior) / avgPrior : 0;
     const score = Math.max(0, Math.round(100 - deviation * 150));
-    components.push({ name: 'Nutrition consistency', score, reason: `${yesterdayMeals.total} cal yesterday` });
+    // Named and worded as explicitly retrospective — this scores how consistent yesterday's total was
+    // against your recent daily average, not anything about today (today's numbers are still
+    // accumulating, so grading a half-finished day here would be misleading).
+    components.push({ name: 'Nutrition (yesterday)', score, reason: `${yesterdayMeals.total} cal vs ~${Math.round(avgPrior)}/day avg` });
   } else {
-    components.push({ name: 'Nutrition consistency', score: null, reason: 'Log a few more meals to unlock this' });
+    components.push({ name: 'Nutrition (yesterday)', score: null, reason: 'Log a few more meals to unlock this' });
   }
 
   const included = components.filter(c => c.score != null);
