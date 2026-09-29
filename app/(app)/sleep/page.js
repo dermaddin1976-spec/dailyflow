@@ -46,7 +46,7 @@ export default async function SleepPage() {
       <p style={{ color: 'var(--text-2)', marginBottom: 18 }}>This week&rsquo;s sleep.</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 18, marginBottom: 20 }}>
-        <BarChart title="Hours per night" unit="h" dates={dates} values={dates.map(d => dailyMap[d] || 0)} formatValue={formatHM} />
+        <BarChart title="Hours per night" unit="h" dates={dates} values={dates.map(d => dailyMap[d] || 0)} labels={dates.map(d => formatHM(dailyMap[d] || 0))} />
 
         <div className="card">
           <h3 style={{ marginBottom: 11 }}>This week</h3>

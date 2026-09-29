@@ -141,7 +141,7 @@ export default async function TrendsPage({ searchParams }) {
         <p style={{ color: 'var(--muted)' }}>Nothing logged in the last {rangeDays} days yet &mdash; log something on Nutrition, Sport, Sleep or Study to see it here.</p>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 18, marginBottom: 20 }}>
-        <BarChart title="Sleep" unit="h" dates={dates} values={dates.map(d => Math.round((sleepMap[d] || 0) * 10) / 10)} formatValue={formatHM} />
+        <BarChart title="Sleep" unit="h" dates={dates} values={dates.map(d => Math.round((sleepMap[d] || 0) * 10) / 10)} labels={dates.map(d => formatHM(sleepMap[d] || 0))} />
         <BarChart title="Study minutes" unit="m" dates={dates} values={dates.map(d => studyMap[d] || 0)} />
         <BarChart title="Training minutes" unit="m" dates={dates} values={dates.map(d => workoutMap[d] || 0)} />
         <BarChart title="Calories logged" unit=" cal" dates={dates} values={dates.map(d => mealMap[d] || 0)} />

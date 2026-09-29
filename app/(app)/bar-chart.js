@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { weekdayLabel } from '../../lib/dates.js';
 
-export function BarChart({ title, unit, dates, values, formatValue }) {
+export function BarChart({ title, unit, dates, values, labels }) {
   const [active, setActive] = useState(null);
   const max = Math.max(1, ...values);
   const barW = 30;
@@ -11,10 +11,10 @@ export function BarChart({ title, unit, dates, values, formatValue }) {
   const chartH = 90;
   const width = dates.length * (barW + gap);
 
-  const label = (v) => (formatValue ? formatValue(v) : `${v}${unit}`);
+  const label = (i, v) => (labels ? labels[i] : `${v}${unit}`);
   const activeInfo = active != null ? {
     date: dates[active],
-    text: label(values[active] || 0),
+    text: label(active, values[active] || 0),
     leftPct: ((active * (barW + gap) + barW / 2) / width) * 100,
   } : null;
 
@@ -56,7 +56,7 @@ export function BarChart({ title, unit, dates, values, formatValue }) {
                   fill="transparent"
                   tabIndex={0}
                   role="button"
-                  aria-label={`${date}: ${label(v)}`}
+                  aria-label={`${date}: ${label(i, v)}`}
                   aria-pressed={isActive}
                   style={{ cursor: 'pointer' }}
                   onMouseEnter={() => setActive(i)}
