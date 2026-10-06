@@ -3,6 +3,12 @@ import { getCurrentUser } from '../../../../lib/auth.js';
 import { checkAiRateLimit, AI_DAILY_LIMIT } from '../../../../lib/rateLimit.js';
 import { callGemini } from '../../../../lib/gemini.js';
 
+// Gemini retries (lib/gemini.js) can take up to ~15-20s on a slow/overloaded
+// response before giving up; the platform's default function timeout is
+// shorter than that, which would kill the request mid-retry instead of
+// letting it succeed or return a real error.
+export const maxDuration = 30;
+
 const MAX_HISTORY_TURNS = 6;
 const MAX_CONTEXT_CHARS = 12000;
 const MAX_QUESTION_CHARS = 1000;

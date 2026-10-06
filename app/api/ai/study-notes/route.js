@@ -4,6 +4,12 @@ import { getCurrentUser } from '../../../../lib/auth.js';
 import { checkAiRateLimit, AI_DAILY_LIMIT } from '../../../../lib/rateLimit.js';
 import { callGemini } from '../../../../lib/gemini.js';
 
+// Gemini retries (lib/gemini.js) can take up to ~15-20s on a slow/overloaded
+// response before giving up; the platform's default function timeout is
+// shorter than that, which would kill the request mid-retry instead of
+// letting it succeed or return a real error.
+export const maxDuration = 30;
+
 const YOUTUBE_RE = /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)/i;
 
 async function lookupVideoTitle(url) {

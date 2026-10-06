@@ -36,9 +36,10 @@ function fileToBase64(file) {
 }
 
 // Downsize a photo before it's stored with the log entry — a full-resolution
-// phone photo on every meal would bloat the database fast, and this only
-// needs to be big enough to recognize what you ate at a glance.
-function resizeForStorage(base64, mimeType, maxWidth = 480, quality = 0.6) {
+// phone photo on every meal would bloat the database fast. Sized to still hold
+// up when the OS zooms it in for a long-press/share-sheet preview, not just at
+// the small in-app thumbnail size.
+function resizeForStorage(base64, mimeType, maxWidth = 900, quality = 0.75) {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {

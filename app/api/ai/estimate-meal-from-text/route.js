@@ -4,6 +4,12 @@ import { checkAiRateLimit, AI_DAILY_LIMIT } from '../../../../lib/rateLimit.js';
 import { callGemini } from '../../../../lib/gemini.js';
 import { groundMealTotals } from '../../../../lib/foodDb.js';
 
+// Gemini retries (lib/gemini.js) can take up to ~15-20s on a slow/overloaded
+// response before giving up; the platform's default function timeout is
+// shorter than that, which would kill the request mid-retry instead of
+// letting it succeed or return a real error.
+export const maxDuration = 30;
+
 export async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
